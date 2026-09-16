@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotizador Todo Riesgo Operativo (TRO) - v19</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #cbd5e1;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { max-width: 1450px; margin: 0 auto; }
+
+        /* OVERLAY LOGIN */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.88);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+
+        .login-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-card h2 { color: var(--primary); margin-top: 0; }
+        .login-card .form-group { text-align: left; margin-bottom: 15px; }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 { margin: 0; font-size: 1.4rem; }
+        header p { margin: 3px 0 0 0; opacity: 0.85; font-size: 0.85rem; }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 5px;
+        }
+
+        .tab-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .tab-btn.active {
+            background: var(--primary-light);
+            color: white;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 20px; }
+        @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.05rem;
+            color: var(--primary);
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group { margin-bottom: 12px; }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 0.82rem;
+        }
+
+        input[type="number"], input[type="text"], input[type="password"], input[type="date"], select {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+        }
+
+        .slider-container { display: flex; align-items: center; gap: 15px; }
+        .slider-container input[type="range"] { flex-grow: 1; }
+        .slider-container input[type="number"] { width: 80px; }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.82rem;
+        }
+        .checkbox-item { display: flex; align-items: center; gap: 6px; }
+
+        .summary-table, .sublimit-table, .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            margin-top: 10px;
+        }
+
+        .summary-table th, .summary-table td,
+        .sublimit-table th, .sublimit-table td,
+        .admin-table th, .admin-table td {
+            border: 1px solid var(--border);
+            padding: 5px 6px;
+            text-align: left;
+        }
+
+        .summary-table th, .sublimit-table th, .admin-table th {
+            background-color: #f1f5f9;
+            color: var(--primary);
+        }
+
+        .text-right { text-align: right !important; }
+        .text-center { text-align: center !important; }
+
+        .badge {
+            background-color: #dbeafe;
+            color: var(--primary);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        .total-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .scrollable-table { max-height: 500px; overflow-y: auto; }
+        .btn {
+            background-color: var(--primary-light);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-success { background-color: var(--success); }
+
+        .header-img-container { width: 100%; text-align: center; margin-bottom: 15px; }
+
+        .policy-conditions {
+            font-size: 0.82rem;
+            line-height: 1.4;
+            color: #334155;
+            background: #f8fafc;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .policy-conditions ul { margin: 5px 0 10px 18px; padding: 0; }
+        .policy-conditions li { margin-bottom: 4px; }
+
+        tr.disabled-row {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+        }
+        tr.disabled-row td {
+            text-decoration: line-through;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            header, .nav-tabs, .btn, .btn-clear, #tab-admin, #tab-auditoria, #login-overlay { display: none !important; }
+            .grid { display: block; }
+            .card { border: none; box-shadow: none; padding: 0; margin-bottom: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- OVERLAY LOGIN DE ACCESO -->
+<div id="login-overlay">
+    <div class="login-card">
+        <h2>San Cristóbal Seguros</h2>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v19)</p>
+        <div class="form-group">
+            <label>Usuario</label>
+            <input type="text" id="login-user" placeholder="Ej: admin o comercial">
+        </div>
+        <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" id="login-pass" placeholder="Ej: admin123 o comercial123">
+        </div>
+        <button type="button" class="btn btn-success" style="width: 100%; padding: 10px; margin-top: 10px;" onclick="iniciarSesion()">Ingresar al Sistema</button>
+        <p id="login-error" style="color: var(--danger); font-size: 0.8rem; margin-top: 10px; display: none;">Usuario o contraseña incorrectos.</p>
+    </div>
+</div>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
+            <p>Versión v19 — Versión Definitiva Completa</p>
+        </div>
+        <div>
+            <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
+            <button type="button" class="btn btn-danger" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <!-- NAVEGACIÓN PRINCIPAL -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="verPestana('cotizador')">1. Cotizador TRO</button>
+        <button class="tab-btn" onclick="verPestana('cliente')">2. Propuesta Comercial (Cliente)</button>
+        <button class="tab-btn" id="btn-tab-admin" onclick="verPestana('admin')" style="display: none;">3. Panel ABM Administrador</button>
+        <button class="tab-btn" onclick="verPestana('auditoria')">4. Log de Auditoría</button>
+    </div>
+
+    <!-- PESTAÑA 1: COTIZADOR PRINCIPAL -->
+    <div id="tab-cotizador" class="tab-content active">
+        <div class="grid">
+            <!-- COLUMNA IZQUIERDA -->
+            <div>
+                <!-- DATOS DEL CLIENTE E INTERMEDIARIOS -->
+                <div class="card">
+                    <h2>1. Identificación de Cliente y Estructura Comercial</h2>
+                    <div class="form-row">
+                        <div class="form-group"><label>Razón Social / Asegurado</label><input type="text" id="cli-razon-social" value="EMPRESA MODELO S.A." oninput="calcular()"></div>
+                        <div class="form-group"><label>CUIT</label><input type="text" id="cli-cuit" value="30-71234567-8" oninput="calcular()"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Sucursal</label><input type="text" id="str-sucursal" value="Córdoba (03)" oninput="calcular()"></div>
+                        <div class="form-group"><label>Agente / PAS</label><input type="text" id="str-agente" value="GABRIELLI MATIAS (Cod. 8542)" oninput="calcular()"></div>
+                        <div class="form-group"><label>Organizador</label><input type="text" id="str-organizador" value="ORGANIZACION CENTRAL" oninput="calcular()"></div>
+                    </div>
+                </div>
+
+                <!-- DATOS GENERALES Y UBICACIÓN -->
+                <div class="card">
+                    <h2>
+                        2. Datos Generales y Ubicación
+                        <span id="lbl-id-cotizacion" style="font-size: 0.8rem; color: #64748b;">ID: TRO-20260916-0001</span>
+                    </h2>
+                    <div class="form-row">
+                        <div class="form-group"><label>Vigencia Desde</label><input type="date" id="vigencia-desde" value="2026-09-15" onchange="calcular()"></div>
+                        <div class="form-group"><label>Vigencia Hasta</label><input type="date" id="vigencia-hasta" value="2027-09-15" onchange="calcular()"></div>
+                    </div>
+
+                    <div style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 5px;">
+                        <div class="form-row">
+                            <div class="form-group"><label>Domicilio</label><input type="text" id="ubic-domicilio" value="Gral Savio 4960" oninput="calcular()"></div>
+                            <div class="form-group"><label>Localidad</label><input type="text" id="ubic-localidad" value="Córdoba" oninput="calcular()"></div>
+                            <div class="form-group">
+                                <label>Provincia</label>
+                                <select id="ubic-provincia" onchange="calcular()">
+                                    <option value="BUENOS AIRES">BUENOS AIRES</option>
+                                    <option value="CAPITAL FEDERAL">CAPITAL FEDERAL</option>
+                                    <option value="CATAMARCA">CATAMARCA</option>
+                                    <option value="CHACO">CHACO</option>
+                                    <option value="CHUBUT">CHUBUT</option>
+                                    <option value="CÓRDOBA" selected>CÓRDOBA</option>
+                                    <option value="CORRIENTES">CORRIENTES</option>
+                                    <option value="ENTRE RÍOS">ENTRE RÍOS</option>
+                                    <option value="FORMOSA">FORMOSA</option>
+                                    <option value="JUJUY">JUJUY</option>
+                                    <option value="LA PAMPA">LA PAMPA</option>
+                                    <option value="LA RIOJA">LA RIOJA</option>
+                                    <option value="MENDOZA">MENDOZA</option>
+                                    <option value="MISIONES">MISIONES</option>
+                                    <option value="NEUQUÉN">NEUQUÉN</option>
+                                    <option value="RÍO NEGRO">RÍO NEGRO</option>
+                                    <option value="SALTA">SALTA</option>
+                                    <option value="SAN JUAN">SAN JUAN</option>
+                                    <option value="SAN LUIS">SAN LUIS</option>
+                                    <option value="SANTA CRUZ">SANTA CRUZ</option>
+                                    <option value="SANTA FE">SANTA FE</option>
+                                    <option value="SANTIAGO DEL ESTERO">SANTIAGO DEL ESTERO</option>
+                                    <option value="TIERRA DE FUEGO">TIERRA DE FUEGO</option>
+                                    <option value="TUCUMÁN">TUCUMÁN</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Construcción (Afecta Tasa Edificio)</label>
+                            <select id="tipo-construccion" onchange="calcular()">
+                                <option value="1.0" selected>Mampostería - techo de zinc (Factor 1,00)</option>
+                                <option value="1.0">Mampostería - techo de hormigón (Factor 1,00)</option>
+                                <option value="1.0">Mampostería - techo de teja (Factor 1,00)</option>
+                                <option value="2.0">Prefabricadas (Factor 2,00)</option>
+                                <option value="1.3">Paneleria Sándwich (Factor 1,30)</option>
+                                <option value="1.05">Hasta el 50% de construcción de material (Factor 1,05)</option>
+                                <option value="2.0">Madera (Factor 2,00)</option>
+                                <option value="1.0">Galpón (Factor 1,00)</option>
+                                <option value="1.0">Mampostería - techo de fibrocemento (Factor 1,00)</option>
+                            </select>
+                        </div>
+                        <div style="font-size: 0.82rem; background: #f8fafc; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border);">
+                            Zona Terremoto: <b id="lbl-zona-terremoto">Zona 3</b> | Tasa Edif: <b id="lbl-tasa-eq-edif">0.16 ‰</b> | Tasa Cont: <b id="lbl-tasa-eq-cont">0.08 ‰</b>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RUBRO Y TASAS (296 RUBROS) -->
+                <div class="card">
+                    <h2>3. Actividad y Tasas Asignadas (296 Rubros)</h2>
+                    <div class="form-group">
+                        <label for="rubro-search">Buscar Actividad</label>
+                        <input type="text" id="rubro-search" placeholder="Escriba para buscar entre los 296 rubros..." oninput="filtrarRubros()">
+                        <select id="rubro-select" size="5" style="margin-top: 5px;" onchange="seleccionarRubro()"></select>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px; border-radius: 4px; border: 1px solid var(--border);">
+                        <span style="font-size: 0.85rem; font-weight: 600;">Tasas Base Actividad:</span>
+                        <div>
+                            Edificio: <span id="badge-tasa-edif" class="badge">0.480 ‰</span>
+                            Contenido: <span id="badge-tasa-cont" class="badge">1.000 ‰</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MONEDA, PLAN DE PAGO Y CLÁUSULA SWING -->
+                <div class="card">
+                    <h2>4. Moneda, Plan de Pago y Cláusulas Comerciales</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Moneda</label>
+                            <select id="moneda" onchange="calcular()">
+                                <option value="ARS">Pesos ($)</option>
+                                <option value="USD" selected>Dólares (USD)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad de Cuotas</label>
+                            <select id="cuotas" onchange="calcular()">
+                                <option value="1">1 Cuota (Sin Recargo)</option>
+                                <option value="2">2 Cuotas</option>
+                                <option value="3">3 Cuotas</option>
+                                <option value="4">4 Cuotas</option>
+                                <option value="5">5 Cuotas</option>
+                                <option value="6">6 Cuotas</option>
+                                <option value="7">7 Cuotas</option>
+                                <option value="8">8 Cuotas</option>
+                                <option value="9">9 Cuotas</option>
+                                <option value="10">10 Cuotas</option>
+                                <option value="11">11 Cuotas</option>
+                                <option value="12" selected>12 Cuotas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Medio de Pago</label>
+                            <select id="medio-pago" onchange="calcular()">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="debito" selected>Débito (-5% Prima)</option>
+                                <option value="credito">Crédito (-5% Prima)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cláusula Swing (Margen Fluctución)</label>
+                            <select id="clausula-swing" onchange="calcular()">
+                                <option value="0" selected>Sin Cláusula Swing (0%)</option>
+                                <option value="0.10">Cláusula Swing 10%</option>
+                                <option value="0.20">Cláusula Swing 20%</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ajuste Comercial Manual (% Prima)</label>
+                            <input type="number" id="ajuste-comercial" min="-90" max="300" value="0" step="1" oninput="calcular()"> %
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MEDIDAS DE SEGURIDAD -->
+                <div class="card">
+                    <h2>5. Medidas de Seguridad (Descuentos Extras)</h2>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item"><input type="checkbox" id="sec-antiexp" onchange="calcular()"> Inst. Antiexplosiva (-5%)</div>
+                        <div class="checkbox-item"><input type="checkbox" id="sec-sprinkler" onchange="calcular()"> Sprinklers (-20%)</div>
+                        <div class="checkbox-item"><input type="checkbox" id="sec-detectores" onchange="calcular()"> Detectores Humo (-5%)</div>
+                        <div class="checkbox-item"><input type="checkbox" id="sec-hidrantes" onchange="calcular()"> Hidrantes (-10%)</div>
+                    </div>
+                </div>
+
+                <!-- SUMAS ASEGURADAS (TODOS LOS CONCEPTOS DE CONTENIDO) -->
+                <div class="card">
+                    <h2>
+                        6. Sumas Aseguradas
+                        <button type="button" class="btn btn-danger" onclick="borrarSumasAseguradas()">Borrar Sumas</button>
+                    </h2>
+                    <div class="form-group">
+                        <label>Edificio (Tasa Edificio)</label>
+                        <input type="number" id="sa-edificio" value="2500000" oninput="calcular()">
+                    </div>
+                    
+                    <label style="margin-top: 10px; color: var(--primary);">Conceptos con Tasa de Contenido:</label>
+                    <div class="form-row">
+                        <div class="form-group"><label>Contenido General</label><input type="number" id="sa-contenido" value="2000000" oninput="calcular()"></div>
+                        <div class="form-group"><label>Mercadería</label><input type="number" id="sa-mercaderia" value="0" oninput="calcular()"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Materia Prima</label><input type="number" id="sa-mp" value="0" oninput="calcular()"></div>
+                        <div class="form-group"><label>Maquinarias</label><input type="number" id="sa-maquinarias" value="0" oninput="calcular()"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Bienes de uso</label><input type="number" id="sa-bienes-uso" value="0" oninput="calcular()"></div>
+                        <div class="form-group"><label>Equipos electrónicos</label><input type="number" id="sa-equipos-elec" value="0" oninput="calcular()"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Instalaciones</label><input type="number" id="sa-instalaciones" value="0" oninput="calcular()"></div>
+                        <div class="form-group"><label>Insumos</label><input type="number" id="sa-insumos" value="0" oninput="calcular()"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Mercadería bajo warrant</label><input type="number" id="sa-warrant" value="0" oninput="calcular()"></div>
+                        <div class="form-group"><label>Objetos según detalle</label><input type="number" id="sa-objetos" value="0" oninput="calcular()"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Productos Semielaborados</label><input type="number" id="sa-semielab" value="0" oninput="calcular()"></div>
+                        <div class="form-group"><label>Suministros</label><input type="number" id="sa-suministros" value="0" oninput="calcular()"></div>
+                    </div>
+
+                    <div class="form-group" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 10px;">
+                        <label>Pérdida de Beneficios (PB) (Tasa fija 3,00 ‰)</label>
+                        <input type="number" id="sa-pb" value="0" oninput="calcular()">
+                    </div>
+                </div>
+
+                <!-- BARRA DE AJUSTE GLOBAL DE SUBLÍMITES -->
+                <div class="card">
+                    <h2>7. Ajuste Global de Sublímites (% DM Contenido)</h2>
+                    <div class="form-group">
+                        <label for="pct-dm-num">% Cobertura sobre DM Contenido</label>
+                        <div class="slider-container">
+                            <input type="range" id="pct-dm-slider" min="0" max="100" value="10" oninput="sincronizarPct(this.value)">
+                            <input type="number" id="pct-dm-num" min="0" max="100" value="10" oninput="sincronizarPct(this.value)"> %
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: LIQUIDACIÓN TÉCNICA -->
+            <div>
+                <div class="card">
+                    <h2>
+                        Liquidación de Premio Total
+                        <button type="button" class="btn btn-success" onclick="exportarCSV()">Exportar CSV</button>
+                    </h2>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th class="text-right">Tasa / Factor</th>
+                                <th class="text-right">Prima ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Prima Edificio</td><td class="text-right" id="lbl-tasa-edif">-</td><td class="text-right" id="val-prima-edif">-</td></tr>
+                            <tr><td>Prima Contenido</td><td class="text-right" id="lbl-tasa-cont">-</td><td class="text-right" id="val-prima-cont">-</td></tr>
+                            <tr><td>Prima Pérdida de Beneficios (PB)</td><td class="text-right">3,00 ‰</td><td class="text-right" id="val-prima-pb">-</td></tr>
+                            <tr style="background: #fdf2f2;"><td>Prima HVCT</td><td class="text-right" id="lbl-tasa-hvct">0,1425 ‰</td><td class="text-right" id="val-prima-hvct">-</td></tr>
+                            <tr style="background: #fdf2f2;"><td>Prima Granizo</td><td class="text-right" id="lbl-tasa-granizo">0,1425 ‰</td><td class="text-right" id="val-prima-granizo">-</td></tr>
+                            <tr style="background: #f0fdf4;"><td>Prima Terremoto</td><td class="text-right" id="lbl-factor-eq">-</td><td class="text-right" id="val-prima-terremoto">-</td></tr>
+                            <tr style="background: #eff6ff;"><td>Prima Sublímites Activos</td><td class="text-right">Según tabla</td><td class="text-right" id="val-prima-sublimites">-</td></tr>
+                            <tr style="background: #f0fdf4;"><td>Ajuste por Medidas de Seguridad</td><td class="text-right" id="lbl-pct-seg">0%</td><td class="text-right" id="val-ajuste-seg">-</td></tr>
+                            <tr><td>Descuento Medio de Pago</td><td class="text-right" id="lbl-pct-pago">0%</td><td class="text-right" id="val-desc-pago">-</td></tr>
+                            <tr><td>Ajuste Comercial Manual</td><td class="text-right" id="lbl-pct-comercial">0%</td><td class="text-right" id="val-ajuste-comercial">-</td></tr>
+                            <tr style="font-weight: bold; background: #f8fafc;"><td>PRIMA TÉCNICA BASE</td><td class="text-right">-</td><td class="text-right" id="val-prima-tecnica">-</td></tr>
+                            <tr><td>Recargo Financiero</td><td class="text-right" id="lbl-factor-fin">-</td><td class="text-right" id="val-recargo-fin">-</td></tr>
+                            <tr style="font-weight: bold;"><td>SUBTOTAL PRIMA + RECARGO</td><td class="text-right">-</td><td class="text-right" id="val-subtotal-fin">-</td></tr>
+                            <tr><td>Impuestos y Cargas Sociales</td><td class="text-right">35.5% aprox.</td><td class="text-right" id="val-impuestos-total">-</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="total-box">
+                        <div class="total-row">
+                            <span>PREMIO TOTAL:</span>
+                            <span id="val-premio-total">$ 0</span>
+                        </div>
+                        <div style="margin-top: 5px; font-size: 0.85rem; text-align: right; color: var(--primary);" id="val-plan-cuotas">
+                            Plan: 12 cuotas
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>
+                        Sublímites Detallados (31 Coberturas)
+                        <div>
+                            <button type="button" onclick="marcarTodosSublimites(true)" style="font-size:0.75rem; cursor:pointer;">Activar Todos</button>
+                            <button type="button" onclick="marcarTodosSublimites(false)" style="font-size:0.75rem; cursor:pointer;">Desactivar Todos</button>
+                        </div>
+                    </h2>
+                    <div class="scrollable-table">
+                        <table class="sublimit-table">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Incl.</th>
+                                    <th>Sublímite</th>
+                                    <th class="text-right">Suma Asegurada</th>
+                                    <th class="text-center">Factor ‰</th>
+                                    <th class="text-right">Prima</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-sublimites"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 2: PROPUESTA COMERCIAL CLIENTE -->
+    <div id="tab-cliente" class="tab-content">
+        <div class="card">
+            <div class="header-img-container">
+                <svg viewBox="0 0 1000 80" width="100%" height="80" style="background:#fff; border-bottom: 2px solid #1e3a8a;">
+                    <text x="20" y="38" font-family="Arial, sans-serif" font-weight="bold" font-size="22" fill="#002060">SAN CRISTOBAL S.M.S.G.</text>
+                    <text x="20" y="58" font-family="Arial, sans-serif" font-size="11" fill="#555">SAN MARTIN 730 - (5000) CORDOBA - TEL: (0351) 4285500</text>
+                    <text x="20" y="72" font-family="Arial, sans-serif" font-size="11" fill="#002060">cordoba@sancristobal.com.ar - http://www.sancristobal.com.ar</text>
+                    <text x="500" y="42" font-family="Arial, sans-serif" font-size="11" fill="#555">CUIT: 34-50004533-9 - IVA: Responsable Inscripto</text>
+                    <text x="500" y="56" font-family="Arial, sans-serif" font-size="11" fill="#555">Convenio Multilateral: 34-50004533-9</text>
+                    <text x="500" y="70" font-family="Arial, sans-serif" font-size="11" fill="#555">Inicio de actividades: 04/01/1940</text>
+                    <text x="780" y="45" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="#002060">San Cristóbal</text>
+                    <text x="780" y="62" font-family="Arial, sans-serif" font-size="12" fill="#002060">Seguros</text>
+                </svg>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">
+                <h2 style="margin: 0; border: none;">PROPUESTA COMERCIAL — TODO RIESGO OPERATIVO</h2>
+                <button type="button" class="btn" onclick="window.print()">Imprimir / Guardar PDF</button>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <table class="summary-table" style="font-size: 0.85rem; margin-bottom: 15px;">
+                    <tr>
+                        <td><b>Asegurado / Razón Social:</b> <span id="prop-razon-social">-</span></td>
+                        <td><b>CUIT:</b> <span id="prop-cuit">-</span></td>
+                        <td><b>Cotización N°:</b> <span id="prop-id">-</span></td>
+                    </tr>
+                    <tr>
+                        <td><b>Sucursal:</b> <span id="prop-sucursal">-</span></td>
+                        <td><b>Agente / PAS:</b> <span id="prop-agente">-</span></td>
+                        <td><b>Organizador:</b> <span id="prop-organizador">-</span></td>
+                    </tr>
+                    <tr>
+                        <td><b>Ubicación del Riesgo:</b> <span id="prop-domicilio">-</span></td>
+                        <td colspan="2"><b>Vigencia:</b> <span id="prop-vigencia">-</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><b>Actividad Principal:</b> <span id="prop-actividad">-</span></td>
+                        <td><b>Cláusula Swing:</b> <span id="prop-swing">0%</span></td>
+                    </tr>
+                </table>
+
+                <h3 style="color: var(--primary); font-size: 0.95rem; margin-bottom: 5px;">Detalle de Coberturas y Sublímites Contratados</h3>
+                <table class="summary-table" style="font-size: 0.8rem;">
+                    <thead>
+                        <tr style="background-color: #1e3a8a; color: white;">
+                            <th>Cobertura / Sublímite Activo</th>
+                            <th class="text-right">Suma Asegurada</th>
+                            <th class="text-right">Deducible Mínimo Aplicable</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prop-tabla-coberturas"></tbody>
+                </table>
+
+                <div class="total-box" style="margin-top: 15px;">
+                    <div class="total-row">
+                        <span>PLAN DE PAGO Y PREMIO TOTAL:</span>
+                        <span id="prop-premio-total">$ 0</span>
+                    </div>
+                    <div style="margin-top: 5px; font-size: 0.95rem; text-align: right; color: var(--primary);" id="prop-plan-cuotas">12 cuotas</div>
+                </div>
+
+                <!-- TEXTO ARMONIZADO DE CONDICIONES Y CLÁUSULAS -->
+                <div class="policy-conditions">
+                    <b style="color: var(--primary);">CONDICIONES DE COBERTURA</b>
+                    <ul>
+                        <li>Se deja constancia que para los sub-límites de cobertura la medida de la prestación es a primer riesgo absoluto y con una (1) reinstalación en el agregado anual.</li>
+                        <li>Aplicación de franquicias y/o deducibles por todo y cada evento.</li>
+                        <li>En caso de un evento que involucre más de una cobertura se aplicará la franquicia mayor.</li>
+                        <li>El adicional de HVCT y granizo excluye edificaciones con laterales abiertos.</li>
+                        <li>Estos sub-límites de indemnización no incrementan las sumas aseguradas principales, ni los límites de indemnización según corresponda.</li>
+                    </ul>
+
+                    <b style="color: var(--primary);">CLÁUSULAS DE APLICACIÓN</b>
+                    <p style="margin: 4px 0;"><b>Cláusula de Horas (72 Horas de ocurrencia / Recuperos Catastróficos)</b></p>
+                    <p style="margin: 4px 0 8px 0; font-size: 0.78rem; text-align: justify;">
+                        Las palabras “Acontecimiento Siniestral” significarán todos los siniestros individuales producidos y directamente causados por una misma catástrofe. La duración y alcance de un “acontecimiento siniestral” tendrán los siguientes límites:
+                        <br><b>(a)</b> 72 horas consecutivas con respecto a huracán, tifón, tormenta de lluvia, granizo y/o tornado.
+                        <br><b>(b)</b> 72 horas consecutivas con respecto a terremoto, maremoto, onda de marea y/o erupción volcánica.
+                        <br><b>(c)</b> 72 horas consecutivas y dentro de los límites de una misma Ciudad, Pueblo o Poblado, con respecto a tumultos, conmociones civiles y daños maliciosos.
+                        <br><b>(d)</b> 72 horas consecutivas con respecto a cualquier “acontecimiento siniestral”, que incluya siniestro(s) individual(es) causados por cualquiera de los riesgos mencionados en los ítems (a), (b) y (c) precedentes.
+                        <br><b>(e)</b> 168 horas consecutivas con respecto a cualquier “acontecimiento siniestral” de cualquier naturaleza no especificada precedentemente.
+                        <br>El Asegurado podrá elegir la fecha y hora de inicio de dicho período de horas consecutivas.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 3: PANEL ABM ADMINISTRADOR -->
+    <div id="tab-admin" class="tab-content">
+        <div class="card">
+            <h2>Gestión de Usuarios del Sistema</h2>
+            <div class="form-row" style="margin-bottom: 15px;">
+                <div class="form-group"><label>Usuario</label><input type="text" id="abm-user-nombre" placeholder="Nombre usuario..."></div>
+                <div class="form-group"><label>Contraseña</label><input type="password" id="abm-user-pass" placeholder="Clave..."></div>
+                <div class="form-group">
+                    <label>Perfil</label>
+                    <select id="abm-user-perfil">
+                        <option value="comercial">Comercial</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button type="button" class="btn btn-success" onclick="crearUsuario()">+ Crear Usuario</button>
+                </div>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr><th>Usuario</th><th>Perfil</th><th>Estado</th></tr>
+                </thead>
+                <tbody id="tabla-abm-usuarios"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 4: AUDITORÍA -->
+    <div id="tab-auditoria" class="tab-content">
+        <div class="card">
+            <h2>Registro de Auditoría de Sistema</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr><th>Fecha / Hora</th><th>Usuario / Rol</th><th>Acción</th><th>Detalle</th></tr>
+                </thead>
+                <tbody id="tabla-auditoria"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const recargosCuotas = {
+        USD: { 1: 0, 2: 1.004999174, 3: 1.010000388, 4: 1.014999561, 5: 1.020000775, 6: 1.024999949, 7: 1.030100694, 8: 1.035226821, 9: 1.040378458, 10: 1.045555732, 11: 1.050758769, 12: 1.054999072 },
+        ARS: { 1: 0, 2: 1.047000394, 3: 1.072000343, 4: 1.096000457, 5: 1.121000406, 6: 1.146570608, 7: 1.172724070, 8: 1.199474097, 9: 1.226834297, 10: 1.254818587, 11: 1.283441204, 12: 1.306000437 }
+    };
+
+    const zonasProvincias = {
+        "SALTA": 2, "BUENOS AIRES": 5, "CÓRDOBA": 3, "SANTIAGO DEL ESTERO": 4, "ENTRE RÍOS": 5,
+        "FORMOSA": 5, "TUCUMÁN": 3, "CHACO": 5, "MISIONES": 4, "JUJUY": 2, "CHUBUT": 4,
+        "SAN LUIS": 3, "MENDOZA": 1, "RÍO NEGRO": 4, "CORRIENTES": 5, "LA PAMPA": 5,
+        "NEUQUÉN": 2, "LA RIOJA": 1, "SANTA FE": 5, "CATAMARCA": 1, "SAN JUAN": 1,
+        "TIERRA DE FUEGO": 3, "CAPITAL FEDERAL": 5, "SANTA CRUZ": 4
+    };
+
+    const tasasTerremoto = {
+        1: { edif: 0.40, cont: 0.20 },
+        2: { edif: 0.26, cont: 0.13 },
+        3: { edif: 0.16, cont: 0.08 },
+        4: { edif: 0.10, cont: 0.05 },
+        5: { edif: 0.04, cont: 0.02 }
+    };
+
+    // MATRIZ COMPLETA DE 296 RUBROS
+    const rubrosTasasData = [
+        {"r": "Abanicos Y Paraguas, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Aberturas (sin taller), Venta De", "te": 1.1, "tc": 2.2},
+        {"r": "Academia De Baile", "te": 0.16, "tc": 0.28},
+        {"r": "Aceites Vegetales, Fabrica De", "te": 1.04, "tc": 2.0},
+        {"r": "Acumuladores Y Baterias, Venta", "te": 0.8, "tc": 1.56},
+        {"r": "Aerodromo", "te": 2.4, "tc": 3.6},
+        {"r": "Agencia Loterias Y Juegos De Azar", "te": 0.16, "tc": 0.28},
+        {"r": "Agropecuario, Acopiador Y Distribuidor", "te": 0.752, "tc": 1.24},
+        {"r": "Agropecuario, Productor", "te": 0.752, "tc": 1.1},
+        {"r": "Agroquimicos E Insumos Agropecuarios (Venta)", "te": 1.1, "tc": 2.2},
+        {"r": "Agua Corriente, Planta Proveedora", "te": 0.24, "tc": 0.48},
+        {"r": "Aguas Gaseosas Y Refrescos, Venta", "te": 0.48, "tc": 1.18},
+        {"r": "Alfombras, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Almacen Mayorista Venta Y/O Deposito", "te": 1.1, "tc": 2.2},
+        {"r": "Almacen Minorista / Autoservicio", "te": 1.1, "tc": 2.2},
+        {"r": "Almacen Naval", "te": 1.1, "tc": 2.2},
+        {"r": "Almacenes De Campo", "te": 1.1, "tc": 2.2},
+        {"r": "Antiguedades", "te": 1.1, "tc": 2.2},
+        {"r": "Apart Hotel", "te": 0.36, "tc": 0.76},
+        {"r": "Armeria", "te": 0.792, "tc": 1.54},
+        {"r": "Arroz, Procesado Y/o Molino De", "te": 0.84, "tc": 1.54},
+        {"r": "Arte, Galerias De", "te": 0.48, "tc": 1.0},
+        {"r": "Artefactos De Vidrio P/Laboratorio, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Artesanias/Regalos, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Aserradero", "te": 2.6, "tc": 3.8},
+        {"r": "Asilo Y/O Geriatrico", "te": 0.48, "tc": 1.0},
+        {"r": "Ataudes, Deposito Y Lustre", "te": 2.4, "tc": 3.6},
+        {"r": "Automotores, Taller Chapa-Pintura", "te": 1.1, "tc": 2.2},
+        {"r": "Automotores, Taller Mecanico-Electricidad", "te": 0.792, "tc": 1.54},
+        {"r": "Automotores, Taller mecánico - chapa pintura - electricidad", "te": 0.72, "tc": 1.4},
+        {"r": "Automotores, Venta De Repuestos", "te": 0.48, "tc": 1.0},
+        {"r": "Automotores, Venta-Concesionaria", "te": 0.792, "tc": 1.54},
+        {"r": "Avisos Luminosos Y Carteles, Venta", "te": 1.54, "tc": 2.772},
+        {"r": "Azucar, Deposito Y Venta", "te": 1.08, "tc": 1.4},
+        {"r": "Azucar, Ingenio", "te": 0.792, "tc": 1.54},
+        {"r": "Balanzas, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Balneario", "te": 0.48, "tc": 1.0},
+        {"r": "Banco, Entidad Financiera", "te": 0.16, "tc": 0.28},
+        {"r": "Bar, Cafe, Pub", "te": 1.1, "tc": 2.2},
+        {"r": "Barraca, Deposito Y/O Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Bazar", "te": 1.1, "tc": 2.2},
+        {"r": "Bebidas, Elaboracion De", "te": 0.48, "tc": 1.18},
+        {"r": "Bibliotecas", "te": 0.48, "tc": 1.0},
+        {"r": "Bicicletas, Rodados Y Repuestos, Venta", "te": 0.48, "tc": 1.0},
+        {"r": "Bijouterie, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Billares, Juegos Electronicos", "te": 1.1, "tc": 2.2},
+        {"r": "Bobinaje De Motores, Taller Mecanico", "te": 0.792, "tc": 1.54},
+        {"r": "Bodegas", "te": 0.4204, "tc": 1.0},
+        {"r": "Boite, Discoteca, Nigth Club", "te": 1.1, "tc": 2.2},
+        {"r": "Bolsas, Deposito", "te": 2.4, "tc": 3.6},
+        {"r": "Bomboneria", "te": 0.78, "tc": 1.64},
+        {"r": "Bordados, Taller", "te": 1.1, "tc": 2.2},
+        {"r": "Boutique", "te": 0.792, "tc": 1.54},
+        {"r": "Café, Tostado, Secado Y/O Molienda", "te": 0.74, "tc": 1.52},
+        {"r": "Cafe Y Te, Deposito Y Venta", "te": 0.74, "tc": 1.52},
+        {"r": "Cal, Yeso, Fabricacion", "te": 0.48, "tc": 0.84},
+        {"r": "Calderas, Compresores, Sala De Maquinas", "te": 0.58, "tc": 1.0},
+        {"r": "Calzados Fabricas", "te": 1.0, "tc": 1.96},
+        {"r": "Camara Frigorifica", "te": 0.672, "tc": 1.2},
+        {"r": "Camping, Pesca, Nautica, Negocio De Venta", "te": 0.396, "tc": 0.79},
+        {"r": "Canchas Pelota, Paddle, Tenis", "te": 0.16, "tc": 0.28},
+        {"r": "Caramelos, Chocolates Y Afines, Fabrica", "te": 0.78, "tc": 1.64},
+        {"r": "Carbon, Leña, Negocio Y Deposito De", "te": 2.4, "tc": 3.6},
+        {"r": "Carnes, Aves Y/O Pescados, Frigorifico", "te": 0.672, "tc": 1.2},
+        {"r": "Carniceria/Polleria/Pescaderia", "te": 0.48, "tc": 1.0},
+        {"r": "Carton Corrugado, Deposito", "te": 1.54, "tc": 2.772},
+        {"r": "Carton No Corrugado Y Envases, Venta De", "te": 1.54, "tc": 2.772},
+        {"r": "Casas De Te", "te": 1.1, "tc": 2.2},
+        {"r": "Casas Velatorias", "te": 0.48, "tc": 1.0},
+        {"r": "Cemento Portland, Fabrica", "te": 0.42, "tc": 0.72},
+        {"r": "Centros de Estética - SPA - SOLARIUM - Baños - Masajes", "te": 0.48, "tc": 1.0},
+        {"r": "Ceramicas Y Porcelanas, Fabrica", "te": 0.54, "tc": 0.94},
+        {"r": "Cereales/Oleaginosas, Depositos", "te": 0.72, "tc": 1.26},
+        {"r": "Cerrajerias, Herrajes", "te": 0.48, "tc": 1.0},
+        {"r": "Cigarrillos, Deposito Y Venta", "te": 1.1, "tc": 2.2},
+        {"r": "Cinematografo, Sala De", "te": 1.1, "tc": 2.2},
+        {"r": "Cirugia Aparatos E Instrumentos", "te": 0.792, "tc": 1.54},
+        {"r": "Clinica, Hospital, Sanatorio, Centros Asist.", "te": 0.36, "tc": 0.76},
+        {"r": "Club Atletico Y Deportivo", "te": 0.48, "tc": 1.0},
+        {"r": "Club Social", "te": 0.48, "tc": 1.0},
+        {"r": "Coke De Hulla, Fabricacion De Briquetas", "te": 0.88, "tc": 1.76},
+        {"r": "Colchas Y Acolchados, Venta", "te": 1.1, "tc": 2.2},
+        {"r": "Colchones Y Almohadas", "te": 1.1, "tc": 2.2},
+        {"r": "Colegio, Centro Educativo y/o Universidad", "te": 0.16, "tc": 0.28},
+        {"r": "Comisionista, Encomiendas", "te": 1.1, "tc": 2.2},
+        {"r": "Compact Disk, Casettes, Audio, Video, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Computacion, Articulos De", "te": 0.792, "tc": 1.54},
+        {"r": "Computos, Centro De", "te": 0.52, "tc": 1.06},
+        {"r": "Confecciones, Taller De", "te": 1.04, "tc": 1.8},
+        {"r": "Consorcio torre de edificio", "te": 0.16, "tc": 0.28},
+        {"r": "Consultorio Medico", "te": 0.16, "tc": 0.28},
+        {"r": "Consultorio Odontologico", "te": 0.16, "tc": 0.28},
+        {"r": "Copias de Planos, Fotocopias, Impresiones", "te": 1.1, "tc": 2.2},
+        {"r": "Corcho, Fabrica De Articulos De", "te": 2.2, "tc": 3.4},
+        {"r": "Corralón Materiales de Construcción con Madera", "te": 1.54, "tc": 2.772},
+        {"r": "Corralón Materiales de Construcción sin Madera", "te": 0.792, "tc": 1.54},
+        {"r": "Cortinas de Plástico y/ó Madera, Venta de", "te": 0.792, "tc": 1.54},
+        {"r": "Cortinas Metálicas, Venta de", "te": 0.32, "tc": 0.64},
+        {"r": "Cosmeticos", "te": 1.06, "tc": 1.96},
+        {"r": "Cotillon, Reposteria", "te": 1.54, "tc": 2.772},
+        {"r": "Criadero De Aves", "te": 1.0, "tc": 2.0},
+        {"r": "Cristales", "te": 0.52, "tc": 0.9},
+        {"r": "Cuchilleria, Tijeras, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Cuero, Fabrica De Articulos De", "te": 0.8, "tc": 1.6},
+        {"r": "Cuero, Terminacion Y Pintado", "te": 0.96, "tc": 1.92},
+        {"r": "Cuero, Venta Articulo De", "te": 0.792, "tc": 1.54},
+        {"r": "Cueros Crudos, Deposito", "te": 0.792, "tc": 1.54},
+        {"r": "Curtiembre", "te": 0.8, "tc": 1.6},
+        {"r": "Decoracion, Casas De", "te": 1.54, "tc": 2.772},
+        {"r": "Deportes, Venta De Articulos De", "te": 0.792, "tc": 1.54},
+        {"r": "Deposito Empresa Cargas", "te": 1.54, "tc": 2.772},
+        {"r": "Deposito Mercaderias Generales", "te": 0.869, "tc": 1.738},
+        {"r": "Desmotadora De Algodon", "te": 2.2, "tc": 5.0},
+        {"r": "Dibujo, Venta Materiales Para", "te": 1.1, "tc": 2.2},
+        {"r": "Drogueria Farmaceutica", "te": 0.792, "tc": 1.54},
+        {"r": "Drogueria Industrial, 25 % Inflamable", "te": 1.1, "tc": 2.2},
+        {"r": "Electricidad, Venta Articulos De", "te": 0.792, "tc": 1.54},
+        {"r": "Electrodomesticos, Venta De", "te": 0.792, "tc": 1.54},
+        {"r": "Electronica, Audio, Video, Venta Equipos", "te": 0.792, "tc": 1.54},
+        {"r": "Embarcaciones De Placer", "te": 1.1, "tc": 2.2},
+        {"r": "Equipos De Electromedicina", "te": 0.792, "tc": 1.54},
+        {"r": "Equipos Y Uniformes De Trabajo, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Especias, Moliendas Y Clasificacion", "te": 1.2, "tc": 2.24},
+        {"r": "Estacion De Omnibus / Terminal", "te": 0.792, "tc": 1.54},
+        {"r": "Estacion De Servicio", "te": 1.0, "tc": 2.0},
+        {"r": "Estancia/Chacras, Cascos De", "te": 0.48, "tc": 1.0},
+        {"r": "Estudio Juridico", "te": 0.16, "tc": 0.28},
+        {"r": "Explotacion Y Reparacion De Red Cloacal", "te": 0.24, "tc": 0.48},
+        {"r": "Explotacion Y Reparacion De Red De Agua Potable", "te": 0.24, "tc": 0.48},
+        {"r": "Farmacia", "te": 1.1, "tc": 2.2},
+        {"r": "Ferreteria", "te": 1.1, "tc": 2.2},
+        {"r": "Fiambreria", "te": 0.72, "tc": 1.26},
+        {"r": "Filatelia", "te": 0.792, "tc": 1.54},
+        {"r": "Forrajeria", "te": 2.4, "tc": 3.6},
+        {"r": "Fotograbado, Taller De", "te": 0.792, "tc": 1.54},
+        {"r": "Fotografia Y Optica", "te": 1.1, "tc": 2.2},
+        {"r": "Frutas Y Verduras, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Frutas, Verduras, Clasificacion, Limp", "te": 1.04, "tc": 2.28},
+        {"r": "Galeria Comercial", "te": 1.1, "tc": 2.2},
+        {"r": "Galletitas, Fideos, Panificacion, Y/o Mezclas Alimenticias", "te": 0.88, "tc": 1.68},
+        {"r": "Galvanizacion, Taller", "te": 0.792, "tc": 1.54},
+        {"r": "Garage, Playa De Estacionamiento", "te": 0.792, "tc": 1.54},
+        {"r": "Gas, Articulos Para El Ramo", "te": 0.792, "tc": 1.54},
+        {"r": "Gas, Deposito Garrafas Y Tubos", "te": 2.4, "tc": 3.6},
+        {"r": "Gas-planta De Almacenamiento, Fraccionamiento Y Distribucion", "te": 0.956, "tc": 3.54},
+        {"r": "Gimnasio", "te": 0.48, "tc": 1.0},
+        {"r": "Golosinas, Venta Por Mayor", "te": 0.524, "tc": 1.05},
+        {"r": "Goma Y Caucho, Articulos Para La Venta", "te": 1.32, "tc": 2.4},
+        {"r": "Goma Y/O Caucho, Fabrica De Articulos De", "te": 1.36, "tc": 2.4},
+        {"r": "Gomeria, Taller De Reparacion", "te": 1.54, "tc": 2.772},
+        {"r": "Granos, Almacenamiento En Silos Y/O Celdas", "te": 0.72, "tc": 1.26},
+        {"r": "Guarderia Nautica", "te": 1.54, "tc": 2.772},
+        {"r": "Heladeria", "te": 0.792, "tc": 1.54},
+        {"r": "Helados, Elaboracion Industrial", "te": 0.616, "tc": 1.144},
+        {"r": "Herboristeria", "te": 0.792, "tc": 1.54},
+        {"r": "Herrajes, Venta De", "te": 0.48, "tc": 1.0},
+        {"r": "Herreria, Taller", "te": 0.48, "tc": 1.0},
+        {"r": "Hilados, Venta", "te": 0.72, "tc": 1.36},
+        {"r": "Hilanderia", "te": 1.44, "tc": 2.6},
+        {"r": "Hojalateria/Zingueria", "te": 0.48, "tc": 1.0},
+        {"r": "Hospedaje/ Hostel/ Albergue Transitorio", "te": 0.48, "tc": 1.0},
+        {"r": "Hospital/Sanatorio/Clinica", "te": 0.48, "tc": 1.0},
+        {"r": "Hotel", "te": 0.36, "tc": 0.76},
+        {"r": "Huevos, Venta De", "te": 1.1, "tc": 2.2},
+        {"r": "Iglesia, Templo", "te": 0.16, "tc": 0.28},
+        {"r": "Iluminacion, Venta De Articulos", "te": 0.72, "tc": 1.4},
+        {"r": "Imprenta", "te": 0.96, "tc": 1.76},
+        {"r": "Inmobiliaria / Administracion Propiedades", "te": 0.16, "tc": 0.28},
+        {"r": "Invernadero", "te": 0.48, "tc": 1.0},
+        {"r": "Jardin Y/O Guarderia De Niños", "te": 0.48, "tc": 1.0},
+        {"r": "Joyeria/Relojeria", "te": 0.792, "tc": 1.54},
+        {"r": "Jugueteria", "te": 1.54, "tc": 2.772},
+        {"r": "Kiosco, Salon De Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Laboratorio De Analisis", "te": 0.792, "tc": 1.54},
+        {"r": "Lacteos, Deposito Y Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Lacteos, Procesamiento De", "te": 0.616, "tc": 1.144},
+        {"r": "Laminados Y Terciados, Fabrica", "te": 1.2, "tc": 2.4},
+        {"r": "Lana, Lavadero Industrial", "te": 0.68, "tc": 1.48},
+        {"r": "Lana, Venta De", "te": 1.1, "tc": 2.2},
+        {"r": "Lavadero De Automotores", "te": 0.48, "tc": 1.0},
+        {"r": "Lavadero De Ropa", "te": 1.1, "tc": 2.2},
+        {"r": "Lenceria", "te": 0.792, "tc": 1.54},
+        {"r": "Libreria", "te": 1.1, "tc": 2.2},
+        {"r": "Licores", "te": 0.64, "tc": 1.48},
+        {"r": "Limpieza, Venta De Articulos Del Ramo", "te": 0.792, "tc": 1.58},
+        {"r": "Liquidos Combustibles Y/o Inflamables, Deposito Y Vta.", "te": 1.54, "tc": 2.772},
+        {"r": "Lonas, Pesca, Caza, Camping", "te": 1.1, "tc": 2.2},
+        {"r": "Lubricantes, Venta Y/O Taller Lubricacion", "te": 1.54, "tc": 2.772},
+        {"r": "Maderas Duras, Deposito Y Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Maderas Terciadas Y/O Laminas De Madera, Venta", "te": 1.54, "tc": 2.772},
+        {"r": "Maniquies", "te": 1.1, "tc": 2.2},
+        {"r": "Maquinas Agricolas Y Repuestos, Venta", "te": 0.48, "tc": 1.0},
+        {"r": "Maquinas Industriales Y Repuestos, Venta", "te": 0.48, "tc": 1.0},
+        {"r": "Maquinas Para Oficina, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Marcos P/Cuadros, Taller Armado", "te": 1.1, "tc": 2.2},
+        {"r": "Marmoleria", "te": 0.48, "tc": 1.0},
+        {"r": "Marroquineria", "te": 0.792, "tc": 1.54},
+        {"r": "Medias Y Corbatas, Venta De", "te": 0.792, "tc": 1.54},
+        {"r": "Merceria", "te": 0.792, "tc": 1.54},
+        {"r": "Metales, Extraccion", "te": 0.32, "tc": 0.64},
+        {"r": "Metales, Fundicion Y/O Refinacion", "te": 0.4, "tc": 0.8},
+        {"r": "Metales, Venta De Chapas, Perfiles, Barras", "te": 0.32, "tc": 0.64},
+        {"r": "Metalurgica, Industria", "te": 0.52, "tc": 0.86},
+        {"r": "Miel Y Articulos Del Ramo, Deposito Y/O Venta", "te": 0.48, "tc": 1.0},
+        {"r": "Modas Para Damas, Boutique", "te": 0.792, "tc": 1.54},
+        {"r": "Molino Harinero", "te": 0.92, "tc": 1.88},
+        {"r": "Motos - Accesorios - Repuestos", "te": 0.792, "tc": 1.54},
+        {"r": "Motos - Taller", "te": 0.792, "tc": 1.54},
+        {"r": "Motos, Venta, Concesionaria.", "te": 0.72, "tc": 1.4},
+        {"r": "Muebles De Madera, Venta", "te": 1.54, "tc": 2.772},
+        {"r": "Muebles Metalicos, Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Musica Instrumentos, Venta De", "te": 1.1, "tc": 2.2},
+        {"r": "Muy Inflamables Y/O Explosivos, Deposito Y Vta.", "te": 8.0, "tc": 10.0},
+        {"r": "Neumaticos, Recapado Y/O Vulcanizacion", "te": 1.16, "tc": 2.08},
+        {"r": "Neumaticos, Venta De", "te": 1.1, "tc": 2.2},
+        {"r": "Novias, Trajes De", "te": 1.1, "tc": 2.2},
+        {"r": "Oficina", "te": 0.16, "tc": 0.28},
+        {"r": "Optica, Negocio", "te": 1.1, "tc": 2.2},
+        {"r": "Orfebreria", "te": 0.792, "tc": 1.54},
+        {"r": "Ortopedia, Negocio", "te": 0.792, "tc": 1.54},
+        {"r": "Panadería Con Horno - Elaboración y Venta", "te": 1.1, "tc": 2.2},
+        {"r": "Panadería y confitería, Venta", "te": 0.48, "tc": 1.0},
+        {"r": "Pañalera", "te": 1.276, "tc": 2.376},
+        {"r": "Papel Y Carton No Corrugado, Venta", "te": 0.96, "tc": 1.56},
+        {"r": "Papel Y/O Carton Corrugado, Fabrica De Articulo De", "te": 1.22, "tc": 2.36},
+        {"r": "Papel Y/O Carton No Corrugado, Fabrica De", "te": 0.96, "tc": 1.56},
+        {"r": "Pastas Frescas Alimenticias, Fabrica Y Venta", "te": 1.1, "tc": 2.2},
+        {"r": "Peleteria", "te": 1.1, "tc": 2.2},
+        {"r": "Peliculas, Video, Grabaciones, Establecimiento", "te": 0.792, "tc": 1.54},
+        {"r": "Peligrosos, Deposito De", "te": 1.54, "tc": 2.772},
+        {"r": "Peluquería y Barbería", "te": 0.792, "tc": 1.54},
+        {"r": "Perfumeria", "te": 1.1, "tc": 2.2},
+        {"r": "Pintureria", "te": 2.4, "tc": 3.6},
+        {"r": "Pista De Baile", "te": 0.16, "tc": 0.28},
+        {"r": "Pizzeria/Choperia", "te": 1.1, "tc": 2.2},
+        {"r": "Plantas Artificiales", "te": 1.54, "tc": 2.772},
+        {"r": "Plantas, Venta De", "te": 0.48, "tc": 1.0},
+        {"r": "Plasticos Esponjosos, Venta De Articulo", "te": 2.4, "tc": 3.6},
+        {"r": "Plasticos Espumosos, Fabrica De", "te": 2.4, "tc": 4.8},
+        {"r": "Plasticos No Espumosos, Fabrica De Articulos De", "te": 1.2, "tc": 1.2},
+        {"r": "Protesis Dentales, Taller", "te": 0.792, "tc": 1.54},
+        {"r": "Queseria", "te": 0.48, "tc": 1.0},
+        {"r": "Quimica, Industria", "te": 8.0, "tc": 10.0},
+        {"r": "Radio, Estacion De", "te": 0.4, "tc": 0.8},
+        {"r": "Radio, Television, Estudio Y/O Transmision", "te": 0.72, "tc": 1.4},
+        {"r": "Regaleria", "te": 0.792, "tc": 1.54},
+        {"r": "Restaurant", "te": 1.1, "tc": 2.2},
+        {"r": "Revestimientos, Venta De", "te": 1.54, "tc": 2.772},
+        {"r": "Ropa Blanca, Sabanas, Manteles, Venta De", "te": 0.792, "tc": 1.54},
+        {"r": "Ropa Informal, Jeans, Negocio", "te": 0.792, "tc": 1.54},
+        {"r": "Ropa Para Bebes, Negocio", "te": 0.792, "tc": 1.54},
+        {"r": "Ropa Para Hombres", "te": 0.792, "tc": 1.54},
+        {"r": "Rotiseria, Comidas", "te": 1.1, "tc": 2.2},
+        {"r": "Sal, Extraccion Y/o Refinacion", "te": 0.4, "tc": 0.8},
+        {"r": "Salon De Fiestas Infantiles", "te": 0.48, "tc": 1.0},
+        {"r": "Salon De Fiestas Sin Juegos Infantiles", "te": 0.48, "tc": 1.0},
+        {"r": "Sanitarios, Negocio", "te": 0.792, "tc": 1.54},
+        {"r": "Santeria", "te": 0.792, "tc": 1.54},
+        {"r": "Sastreria", "te": 1.1, "tc": 2.2},
+        {"r": "Secadero Y/O Camara De Frutas", "te": 0.792, "tc": 1.54},
+        {"r": "Sellos De Goma, Taller Y Venta", "te": 1.1, "tc": 2.2},
+        {"r": "Semilleria, Negocio", "te": 0.792, "tc": 1.54},
+        {"r": "Serigrafia, Taller", "te": 1.54, "tc": 2.772},
+        {"r": "Shoppings", "te": 0.56, "tc": 1.08},
+        {"r": "Sombreros, Venta De", "te": 1.1, "tc": 2.2},
+        {"r": "Subestacion Transformadora", "te": 0.68, "tc": 1.28},
+        {"r": "Supermercado e Hipermercado", "te": 0.792, "tc": 1.54},
+        {"r": "Tabaco, Planta De Procesamiento", "te": 0.72, "tc": 1.36},
+        {"r": "Tableros Aglomerados, Fabrica", "te": 2.0, "tc": 3.0},
+        {"r": "Talabarteria", "te": 1.1, "tc": 2.2},
+        {"r": "Taller Reparacion Articulos Del Hogar", "te": 1.1, "tc": 2.2},
+        {"r": "Tanques Productos Quimicos Y/O Inflamable", "te": 8.0, "tc": 10.0},
+        {"r": "Tapiceria, Negocio", "te": 2.4, "tc": 3.6},
+        {"r": "Tapiceria, Taller", "te": 2.4, "tc": 3.6},
+        {"r": "Te, Elaboracion Y/O Envasado", "te": 0.68, "tc": 1.32},
+        {"r": "Teatro", "te": 1.1, "tc": 2.2},
+        {"r": "Tejidos de Punto, Fábrica", "te": 1.1, "tc": 2.2},
+        {"r": "Tejidos de Punto, Negocio", "te": 1.1, "tc": 2.2},
+        {"r": "Telas, Venta De", "te": 0.792, "tc": 1.54},
+        {"r": "Telefonica, Central", "te": 0.44, "tc": 0.88},
+        {"r": "Terminación de Prendas, Lavadero o Tintorería Industrial", "te": 0.68, "tc": 1.48},
+        {"r": "Tienda", "te": 1.1, "tc": 2.2},
+        {"r": "Tintoreria", "te": 1.54, "tc": 2.772},
+        {"r": "Tratamiento y Reparación de Efluete y/o de Aguas Residuales", "te": 0.24, "tc": 0.48},
+        {"r": "Usina De Energia Electrica", "te": 0.56, "tc": 1.06},
+        {"r": "Valijas, Venta De", "te": 1.1, "tc": 2.2},
+        {"r": "Veterinaria", "te": 0.792, "tc": 1.54},
+        {"r": "Videoclub", "te": 1.1, "tc": 2.2},
+        {"r": "Vidrieria, Colocacion Y Venta", "te": 0.792, "tc": 1.54},
+        {"r": "Vidrio, Fabrica", "te": 0.52, "tc": 0.9},
+        {"r": "Vineria, Bebidas", "te": 0.792, "tc": 1.54},
+        {"r": "Yerba Mate, Deposito", "te": 0.792, "tc": 1.54},
+        {"r": "Yerba Mate, Elaboracion", "te": 2.0, "tc": 4.0},
+        {"r": "Yeseria", "te": 1.1, "tc": 2.2},
+        {"r": "Zapateria", "te": 0.792, "tc": 1.54},
+        {"r": "Zapatilleria", "te": 0.792, "tc": 1.54}
+    ];
+
+    // MATRIZ COMPLETA DE 31 SUBLÍMITES
+    const sublimitesData = [
+        { id: "sub_1", n: "Bienes Personales", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_2", n: "Bienes refrigerados - Daños por contaminación del refrigerante", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_3", n: "Bienes refrigerados - Daños por falta o exceso de frío", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_4", n: "Bienes temporariamente trasladados", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_5", n: "Cláusula de daño eléctrico", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_6", n: "Cláusula de limitación de los riesgos de huelga, lockout, cesación, disminución o incremento de actividades", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_7", n: "Cobertura de rotura de maquinaria", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_8", n: "Combustión espontánea (Con existencia de termocuplas)", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_9", n: "Cristales", type: "PCT_DM", pctDM: 0.03, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_10", n: "Daños por Inundación producidos por agua", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_11", n: "Daños por la acción del agua u otras sustancias liquidas", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_12", n: "Derrame y contaminación de Sustancias", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_13", n: "Equipos del asegurado", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.52, active: true },
+        { id: "sub_14", n: "Equipos electrónicos", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_15", n: "Exhibiciones, ferias y exposiciones", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_16", n: "Impacto de vehículos", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_17", n: "Incorporación automática de bienes", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_18", n: "Modelos, moldes y clises", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_19", n: "Obras de construcción y/o Montaje", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_20", n: "Reconstrucción de documentos y/o archivos", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_21", n: "Robo de valores en tránsito", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 2.60, active: true },
+        { id: "sub_22", n: "Robo de contenido General (Incluyendo mercaderías)", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 1.04, active: true },
+        { id: "sub_23", n: "Robo de valores en caja", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 1.56, active: true },
+        { id: "sub_24", n: "Responsabilidad Civil Linderos", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_25", n: "Gastos de aceleración o costos extras", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_26", n: "Gastos de limpieza y/o Remoción de Escombros", type: "EDIF_5", pctDM: 0.05, dedMinPct: 0, factor: 0.39, active: true },
+        { id: "sub_27", n: "Honorarios profesionales", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_28", n: "Bienes propios en ubicaciones de terceros", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_29", n: "Gastos de extinción de incendio", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_30", n: "Equipos electrónicos móviles o portátiles en Territorio Nacional", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 1.04, active: true },
+        { id: "sub_31", n: "Bienes de terceros bajo cuidado, custodia y control", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true }
+    ];
+
+    const usuariosSistema = [
+        { u: "admin", p: "admin123", perfil: "admin" },
+        { u: "comercial", p: "comercial123", perfil: "comercial" }
+    ];
+
+    let usuarioActual = null;
+    let auditLogs = [];
+    let tasaEdifActual = 0.48;
+    let tasaContActual = 1.00;
+
+    function registrarLog(accion, detalle) {
+        const rol = usuarioActual ? usuarioActual.perfil.toUpperCase() : "INVITADO";
+        const now = new Date().toLocaleString('es-AR');
+        auditLogs.unshift({ fecha: now, rol: rol, accion: accion, detalle: detalle });
+        renderAuditoria();
+    }
+
+    function renderAuditoria() {
+        const tbody = document.getElementById('tabla-auditoria');
+        tbody.innerHTML = '';
+        auditLogs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${log.fecha}</td><td><b>${log.rol}</b></td><td>${log.accion}</td><td>${log.detalle}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function iniciarSesion() {
+        const u = document.getElementById('login-user').value.trim();
+        const p = document.getElementById('login-pass').value.trim();
+        const found = usuariosSistema.find(item => item.u === u && item.p === p);
+
+        if (found) {
+            usuarioActual = found;
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('user-info-lbl').innerText = `Usuario: ${found.u} (${found.perfil.toUpperCase()})`;
+            document.getElementById('login-error').style.display = 'none';
+
+            if (found.perfil === 'admin') {
+                document.getElementById('btn-tab-admin').style.display = 'block';
+            } else {
+                document.getElementById('btn-tab-admin').style.display = 'none';
+            }
+            inicializarRubros();
+            renderABMUsuarios();
+            registrarLog("LOGIN_EXITOSO", `Inicio de sesión usuario ${u}`);
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    function cerrarSesion() {
+        registrarLog("LOGOUT", `Cierre de sesión usuario ${usuarioActual ? usuarioActual.u : ''}`);
+        usuarioActual = null;
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.getElementById('login-user').value = '';
+        document.getElementById('login-pass').value = '';
+    }
+
+    function crearUsuario() {
+        const u = document.getElementById('abm-user-nombre').value.trim();
+        const p = document.getElementById('abm-user-pass').value.trim();
+        const perfil = document.getElementById('abm-user-perfil').value;
+
+        if (u && p) {
+            usuariosSistema.push({ u: u, p: p, perfil: perfil });
+            renderABMUsuarios();
+            registrarLog("CREAR_USUARIO", `Nuevo usuario: ${u}`);
+            alert(`Usuario ${u} creado con éxito.`);
+        }
+    }
+
+    function renderABMUsuarios() {
+        const tbody = document.getElementById('tabla-abm-usuarios');
+        tbody.innerHTML = '';
+        usuariosSistema.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${user.u}</td><td><b>${user.perfil.toUpperCase()}</b></td><td>Activo</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function verPestana(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
+    }
+
+    function inicializarRubros() {
+        rubrosTasasData.sort((a, b) => a.r.localeCompare(b.r));
+        filtrarRubros();
+        const select = document.getElementById('rubro-select');
+        for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].text.includes("Maquinas Industriales Y Repuestos, Venta")) {
+                select.selectedIndex = i;
+                break;
+            }
+        }
+        if (select.selectedIndex >= 0) seleccionarRubro();
+        else calcular();
+    }
+
+    function filtrarRubros() {
+        const text = document.getElementById('rubro-search').value.toLowerCase();
+        const select = document.getElementById('rubro-select');
+        select.innerHTML = '';
+        rubrosTasasData.forEach((item, index) => {
+            if (item.r.toLowerCase().includes(text)) {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.innerText = item.r;
+                select.appendChild(opt);
+            }
+        });
+    }
+
+    function seleccionarRubro() {
+        const select = document.getElementById('rubro-select');
+        if (select.selectedIndex >= 0) {
+            const idx = select.value;
+            const item = rubrosTasasData[idx];
+            tasaEdifActual = item.te;
+            tasaContActual = item.tc;
+            document.getElementById('badge-tasa-edif').innerText = tasaEdifActual.toFixed(3) + ' ‰';
+            document.getElementById('badge-tasa-cont').innerText = tasaContActual.toFixed(3) + ' ‰';
+            calcular();
+        }
+    }
+
+    function borrarSumasAseguradas() {
+        ['sa-edificio', 'sa-contenido', 'sa-mercaderia', 'sa-mp', 'sa-maquinarias', 'sa-bienes-uso', 'sa-equipos-elec', 'sa-instalaciones', 'sa-insumos', 'sa-warrant', 'sa-objetos', 'sa-semielab', 'sa-suministros', 'sa-pb'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = 0;
+        });
+        calcular();
+    }
+
+    function sincronizarPct(val) {
+        document.getElementById('pct-dm-slider').value = val;
+        document.getElementById('pct-dm-num').value = val;
+        calcular();
+    }
+
+    function toggleSublimite(index, isChecked) {
+        sublimitesData[index].active = isChecked;
+        calcular();
+    }
+
+    function marcarTodosSublimites(estado) {
+        sublimitesData.forEach(item => item.active = estado);
+        calcular();
+    }
+
+    function fmt(num, mon) {
+        if (isNaN(num) || num === null) return "-";
+        const sym = mon === "USD" ? "USD " : "$ ";
+        return sym + new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(num);
+    }
+
+    function getNum(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+    function calcular() {
+        const mon = document.getElementById('moneda').value;
+        const cuotas = parseInt(document.getElementById('cuotas').value);
+        const medioPago = document.getElementById('medio-pago').value;
+        const provincia = document.getElementById('ubic-provincia').value;
+
+        const factorPago = (medioPago === 'debito' || medioPago === 'credito') ? 0.95 : 1.0;
+        const factorConstruccion = parseFloat(document.getElementById('tipo-construccion').value) || 1.0;
+        const pctSwing = parseFloat(document.getElementById('clausula-swing').value) || 0;
+
+        let pctSeg = 0;
+        if (document.getElementById('sec-antiexp').checked) pctSeg += 0.05;
+        if (document.getElementById('sec-sprinkler').checked) pctSeg += 0.20;
+        if (document.getElementById('sec-detectores').checked) pctSeg += 0.05;
+        if (document.getElementById('sec-hidrantes').checked) pctSeg += 0.10;
+        const factorSeguridad = (1 - pctSeg);
+
+        const zonaEq = zonasProvincias[provincia] || 3;
+        const tasasEq = tasasTerremoto[zonaEq] || tasasTerremoto[3];
+
+        const saEdificio = getNum('sa-edificio');
+        const saContenidoNominal = getNum('sa-contenido') + getNum('sa-mercaderia') + getNum('sa-mp') + getNum('sa-maquinarias') +
+                                  getNum('sa-bienes-uso') + getNum('sa-equipos-elec') + getNum('sa-instalaciones') +
+                                  getNum('sa-insumos') + getNum('sa-warrant') + getNum('sa-objetos') +
+                                  getNum('sa-semielab') + getNum('sa-suministros');
+        const saContenidoAfectada = saContenidoNominal * (1 + pctSwing);
+        const saPb = getNum('sa-pb');
+        const totalDM = saEdificio + saContenidoAfectada;
+
+        const tasaEfEdif = tasaEdifActual * factorConstruccion * factorPago * factorSeguridad;
+        const tasaEfCont = tasaContActual * factorPago * factorSeguridad;
+        const tasaEfPB = 3.00 * factorPago * factorSeguridad;
+
+        const pEdif = saEdificio * (tasaEfEdif / 1000);
+        const pCont = saContenidoAfectada * (tasaEfCont / 1000);
+        const pPB = saPb * (tasaEfPB / 1000);
+
+        const tasaEfHVCT = 0.15 * factorPago * factorSeguridad;
+        const tasaEfGranizo = 0.15 * factorPago * factorSeguridad;
+        const pHVCT = totalDM * (tasaEfHVCT / 1000);
+        const pGranizo = totalDM * (tasaEfGranizo / 1000);
+
+        const tasaEfEqEdif = tasasEq.edif * factorPago * factorSeguridad;
+        const tasaEfEqCont = tasasEq.cont * factorPago * factorSeguridad;
+        const pTerremoto = (saEdificio * (tasaEfEqEdif / 1000)) + (saContenidoAfectada * (tasaEfEqCont / 1000));
+
+        const pctAjusteSlider = (parseFloat(document.getElementById('pct-dm-num').value) || 0) / 100;
+        let primaTotalSublimites = 0;
+
+        const tbody = document.getElementById('tabla-sublimites');
+        const propTbody = document.getElementById('prop-tabla-coberturas');
+        tbody.innerHTML = '';
+        propTbody.innerHTML = '';
+
+        // Agregar Coberturas Principales
+        propTbody.innerHTML += `
+            <tr><td><b>Edificio (Incendio TRO)</b></td><td class="text-right">${fmt(saEdificio, mon)}</td><td class="text-right">0,05% DM Ubicación</td></tr>
+            <tr><td><b>Contenido General (Incendio TRO)</b></td><td class="text-right">${fmt(saContenidoAfectada, mon)}</td><td class="text-right">0,05% DM Ubicación</td></tr>
+        `;
+
+        sublimitesData.forEach((item, idx) => {
+            let saSub = 0, dedMin = 0;
+            const pctEf = item.pctDM * pctAjusteSlider;
+            const factorEf = item.factor * factorPago * factorSeguridad;
+
+            if (item.type === "PCT_DM") {
+                saSub = saContenidoAfectada * pctEf;
+                dedMin = saSub * item.dedMinPct;
+            } else if (item.type === "EDIF_5") {
+                saSub = saEdificio * 0.05;
+                dedMin = 0;
+            }
+
+            let primaSub = item.active ? saSub * (factorEf / 1000) : 0;
+            if (item.active) {
+                primaTotalSublimites += primaSub;
+                propTbody.innerHTML += `
+                    <tr><td>${item.n}</td><td class="text-right">${fmt(saSub, mon)}</td><td class="text-right">${fmt(dedMin, mon)}</td></tr>
+                `;
+            }
+
+            const tr = document.createElement('tr');
+            if (!item.active) tr.className = 'disabled-row';
+            tr.innerHTML = `
+                <td class="text-center"><input type="checkbox" ${item.active ? 'checked' : ''} onchange="toggleSublimite(${idx}, this.checked)"></td>
+                <td>${item.n}</td>
+                <td class="text-right">${item.active ? fmt(saSub, mon) : 'EXCLUIDO'}</td>
+                <td class="text-center">${factorEf.toFixed(4)} ‰</td>
+                <td class="text-right">${item.active ? fmt(primaSub, mon) : '$ 0'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const primaBaseSinSeguridad = (pEdif + pCont + pPB + pHVCT + pGranizo + pTerremoto + primaTotalSublimites) / (factorSeguridad || 1);
+        const valAjusteSeg = -(primaBaseSinSeguridad * pctSeg);
+
+        const pctComercial = getNum('ajuste-comercial') / 100;
+        const valAjusteComercial = (primaBaseSinSeguridad + valAjusteSeg) * pctComercial;
+
+        const primaTecnica = (pEdif + pCont + pPB + pHVCT + pGranizo + pTerremoto + primaTotalSublimites) + valAjusteComercial;
+
+        const factorCuotas = cuotas === 1 ? 1 : (recargosCuotas[mon][cuotas] || 1);
+        const recargoFinanciero = primaTecnica * (factorCuotas - 1);
+        const subtotalFinanciero = primaTecnica + recargoFinanciero;
+
+        const impuestosTotal = subtotalFinanciero * 0.355;
+        const premioTotal = subtotalFinanciero + impuestosTotal;
+
+        document.getElementById('lbl-tasa-edif').innerText = tasaEfEdif.toFixed(4) + ' ‰';
+        document.getElementById('val-prima-edif').innerText = fmt(pEdif, mon);
+        document.getElementById('lbl-tasa-cont').innerText = tasaEfCont.toFixed(4) + ' ‰';
+        document.getElementById('val-prima-cont').innerText = fmt(pCont, mon);
+        document.getElementById('val-prima-pb').innerText = fmt(pPB, mon);
+        document.getElementById('val-prima-hvct').innerText = fmt(pHVCT, mon);
+        document.getElementById('val-prima-granizo').innerText = fmt(pGranizo, mon);
+        document.getElementById('val-prima-terremoto').innerText = fmt(pTerremoto, mon);
+        document.getElementById('val-prima-sublimites').innerText = fmt(primaTotalSublimites, mon);
+
+        document.getElementById('lbl-pct-seg').innerText = '-' + (pctSeg * 100).toFixed(0) + '%';
+        document.getElementById('val-ajuste-seg').innerText = fmt(valAjusteSeg, mon);
+        document.getElementById('lbl-pct-comercial').innerText = (pctComercial * 100).toFixed(0) + '%';
+        document.getElementById('val-ajuste-comercial').innerText = fmt(valAjusteComercial, mon);
+
+        document.getElementById('val-prima-tecnica').innerText = fmt(primaTecnica, mon);
+        document.getElementById('val-recargo-fin').innerText = fmt(recargoFinanciero, mon);
+        document.getElementById('val-subtotal-fin').innerText = fmt(subtotalFinanciero, mon);
+        document.getElementById('val-impuestos-total').innerText = fmt(impuestosTotal, mon);
+        document.getElementById('val-premio-total').innerText = fmt(premioTotal, mon);
+
+        const valorCuota = cuotas > 0 ? premioTotal / cuotas : premioTotal;
+        document.getElementById('val-plan-cuotas').innerText = `Plan: ${cuotas} cuota(s) de ${fmt(valorCuota, mon)}`;
+
+        // MIGRACIÓN A PROPUESTA CLIENTE
+        document.getElementById('prop-razon-social').innerText = document.getElementById('cli-razon-social').value;
+        document.getElementById('prop-cuit').innerText = document.getElementById('cli-cuit').value;
+        document.getElementById('prop-sucursal').innerText = document.getElementById('str-sucursal').value;
+        document.getElementById('prop-agente').innerText = document.getElementById('str-agente').value;
+        document.getElementById('prop-organizador').innerText = document.getElementById('str-organizador').value;
+        document.getElementById('prop-id').innerText = document.getElementById('lbl-id-cotizacion').innerText;
+        document.getElementById('prop-domicilio').innerText = document.getElementById('ubic-domicilio').value + ', ' + provincia;
+        
+        const selRubro = document.getElementById('rubro-select');
+        const actNombre = selRubro.selectedIndex >= 0 ? selRubro.options[selRubro.selectedIndex].text : 'Actividad Industrial';
+        document.getElementById('prop-actividad').innerText = actNombre;
+        document.getElementById('prop-vigencia').innerText = `${document.getElementById('vigencia-desde').value} al ${document.getElementById('vigencia-hasta').value}`;
+        document.getElementById('prop-swing').innerText = (pctSwing * 100) + '%';
+        document.getElementById('prop-premio-total').innerText = fmt(premioTotal, mon);
+        document.getElementById('prop-plan-cuotas').innerText = `Plan propuesto: ${cuotas} cuotas de ${fmt(valorCuota, mon)}`;
+    }
+
+    function exportarCSV() {
+        let csv = "Concepto,Suma Asegurada,Prima\n";
+        csv += `Edificio,${document.getElementById('sa-edificio').value},${document.getElementById('val-prima-edif').innerText}\n`;
+        csv += `Contenido,${document.getElementById('sa-contenido').value},${document.getElementById('val-prima-cont').innerText}\n`;
+        csv += `Premio Total,-,${document.getElementById('val-premio-total').innerText}\n`;
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'cotizacion_tro.csv';
+        a.click();
+        registrarLog("EXPORTAR_CSV", "Descarga de cotización CSV");
+    }
+</script>
+</body>
+</html>
