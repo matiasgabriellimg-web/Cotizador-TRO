@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotizador Todo Riesgo Operativo (TRO) - v19</title>
+    <title>Cotizador Todo Riesgo Operativo (TRO) - v21</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -234,7 +234,7 @@
 
         @media print {
             body { background: white; padding: 0; }
-            header, .nav-tabs, .btn, .btn-clear, #tab-admin, #tab-auditoria, #login-overlay { display: none !important; }
+            header, .nav-tabs, .btn, .btn-clear, #tab-admin, #tab-tasas, #tab-auditoria, #login-overlay { display: none !important; }
             .grid { display: block; }
             .card { border: none; box-shadow: none; padding: 0; margin-bottom: 15px; }
         }
@@ -246,7 +246,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <h2>San Cristóbal Seguros</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v19)</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v21)</p>
         <div class="form-group">
             <label>Usuario</label>
             <input type="text" id="login-user" placeholder="Ej: admin o comercial">
@@ -264,7 +264,7 @@
     <header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
-            <p>Versión v19 — Versión Definitiva Completa</p>
+            <p>Versión v21 — Deducible del 10% del Siniestro Integrado</p>
         </div>
         <div>
             <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
@@ -276,8 +276,9 @@
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="verPestana('cotizador')">1. Cotizador TRO</button>
         <button class="tab-btn" onclick="verPestana('cliente')">2. Propuesta Comercial (Cliente)</button>
-        <button class="tab-btn" id="btn-tab-admin" onclick="verPestana('admin')" style="display: none;">3. Panel ABM Administrador</button>
-        <button class="tab-btn" onclick="verPestana('auditoria')">4. Log de Auditoría</button>
+        <button class="tab-btn tab-admin-only" id="btn-tab-tasas" onclick="verPestana('tasas')" style="display: none;">3. Matriz de Tasas Activas</button>
+        <button class="tab-btn tab-admin-only" id="btn-tab-admin" onclick="verPestana('admin')" style="display: none;">4. Gestión de Usuarios</button>
+        <button class="tab-btn" onclick="verPestana('auditoria')">5. Log de Auditoría</button>
     </div>
 
     <!-- PESTAÑA 1: COTIZADOR PRINCIPAL -->
@@ -446,7 +447,7 @@
                     </div>
                 </div>
 
-                <!-- SUMAS ASEGURADAS (TODOS LOS CONCEPTOS DE CONTENIDO) -->
+                <!-- SUMAS ASEGURADAS -->
                 <div class="card">
                     <h2>
                         6. Sumas Aseguradas
@@ -486,18 +487,6 @@
                     <div class="form-group" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 10px;">
                         <label>Pérdida de Beneficios (PB) (Tasa fija 3,00 ‰)</label>
                         <input type="number" id="sa-pb" value="0" oninput="calcular()">
-                    </div>
-                </div>
-
-                <!-- BARRA DE AJUSTE GLOBAL DE SUBLÍMITES -->
-                <div class="card">
-                    <h2>7. Ajuste Global de Sublímites (% DM Contenido)</h2>
-                    <div class="form-group">
-                        <label for="pct-dm-num">% Cobertura sobre DM Contenido</label>
-                        <div class="slider-container">
-                            <input type="range" id="pct-dm-slider" min="0" max="100" value="10" oninput="sincronizarPct(this.value)">
-                            <input type="number" id="pct-dm-num" min="0" max="100" value="10" oninput="sincronizarPct(this.value)"> %
-                        </div>
                     </div>
                 </div>
             </div>
@@ -569,6 +558,18 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- SECCIÓN 7: AJUSTE GLOBAL DE SUBLÍMITES -->
+                <div class="card">
+                    <h2>7. Ajuste Global de Sublímites (% DM Contenido)</h2>
+                    <div class="form-group">
+                        <label for="pct-dm-num">% Cobertura sobre DM Contenido</label>
+                        <div class="slider-container">
+                            <input type="range" id="pct-dm-slider" min="0" max="100" value="10" oninput="sincronizarPct(this.value)">
+                            <input type="number" id="pct-dm-num" min="0" max="100" value="10" oninput="sincronizarPct(this.value)"> %
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -636,7 +637,6 @@
                     <div style="margin-top: 5px; font-size: 0.95rem; text-align: right; color: var(--primary);" id="prop-plan-cuotas">12 cuotas</div>
                 </div>
 
-                <!-- TEXTO ARMONIZADO DE CONDICIONES Y CLÁUSULAS -->
                 <div class="policy-conditions">
                     <b style="color: var(--primary);">CONDICIONES DE COBERTURA</b>
                     <ul>
@@ -663,34 +663,72 @@
         </div>
     </div>
 
-    <!-- PESTAÑA 3: PANEL ABM ADMINISTRADOR -->
+    <!-- PESTAÑA 3: MATRIZ DE TASAS ACTIVAS -->
+    <div id="tab-tasas" class="tab-content">
+        <div class="card">
+            <h2>
+                Matriz de Tasas Activas (296 Rubros)
+                <div>
+                    <button type="button" class="btn btn-success" onclick="exportarTasasCSV()">Exportar Tasas (CSV)</button>
+                    <button type="button" class="btn" onclick="document.getElementById('import-csv-file').click()">Importar Tasas (CSV)</button>
+                    <input type="file" id="import-csv-file" accept=".csv" style="display: none;" onchange="importarTasasCSV(event)">
+                </div>
+            </h2>
+            <div class="form-group">
+                <input type="text" id="admin-search-tasas" placeholder="Filtrar por rubro..." oninput="renderMatrizTasas()">
+            </div>
+            <div class="scrollable-table">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Rubro / Actividad</th>
+                            <th class="text-right">Tasa Edificio (‰)</th>
+                            <th class="text-right">Tasa Contenido (‰)</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-matriz-tasas"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 4: GESTIÓN DE USUARIOS -->
     <div id="tab-admin" class="tab-content">
         <div class="card">
-            <h2>Gestión de Usuarios del Sistema</h2>
+            <h2 id="form-user-title">Agregar Nuevo Usuario</h2>
+            <input type="hidden" id="abm-user-index" value="-1">
             <div class="form-row" style="margin-bottom: 15px;">
                 <div class="form-group"><label>Usuario</label><input type="text" id="abm-user-nombre" placeholder="Nombre usuario..."></div>
                 <div class="form-group"><label>Contraseña</label><input type="password" id="abm-user-pass" placeholder="Clave..."></div>
                 <div class="form-group">
                     <label>Perfil</label>
                     <select id="abm-user-perfil">
-                        <option value="comercial">Comercial</option>
+                        <option value="comercial">Comercial / Suscriptor</option>
                         <option value="admin">Administrador</option>
                     </select>
                 </div>
-                <div class="form-group" style="display: flex; align-items: flex-end;">
-                    <button type="button" class="btn btn-success" onclick="crearUsuario()">+ Crear Usuario</button>
+                <div class="form-group" style="display: flex; align-items: flex-end; gap: 5px;">
+                    <button type="button" class="btn btn-success" id="btn-guardar-user" onclick="guardarUsuario()">+ Guardar Usuario</button>
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-user" onclick="limpiarFormUsuario()" style="display: none;">Cancelar</button>
                 </div>
             </div>
+            <h2>Listado de Usuarios Registrados</h2>
             <table class="admin-table">
                 <thead>
-                    <tr><th>Usuario</th><th>Perfil</th><th>Estado</th></tr>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Perfil</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
                 </thead>
                 <tbody id="tabla-abm-usuarios"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- PESTAÑA 4: AUDITORÍA -->
+    <!-- PESTAÑA 5: AUDITORÍA -->
     <div id="tab-auditoria" class="tab-content">
         <div class="card">
             <h2>Registro de Auditoría de Sistema</h2>
@@ -727,7 +765,7 @@
     };
 
     // MATRIZ COMPLETA DE 296 RUBROS
-    const rubrosTasasData = [
+    let rubrosTasasData = [
         {"r": "Abanicos Y Paraguas, Venta", "te": 0.792, "tc": 1.54},
         {"r": "Aberturas (sin taller), Venta De", "te": 1.1, "tc": 2.2},
         {"r": "Academia De Baile", "te": 0.16, "tc": 0.28},
@@ -1036,7 +1074,7 @@
         { id: "sub_6", n: "Cláusula de limitación de los riesgos de huelga, lockout, cesación, disminución o incremento de actividades", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
         { id: "sub_7", n: "Cobertura de rotura de maquinaria", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
         { id: "sub_8", n: "Combustión espontánea (Con existencia de termocuplas)", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.39, active: true },
-        { id: "sub_9", n: "Cristales", type: "PCT_DM", pctDM: 0.03, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_9", n: "Cristales", type: "PCT_DM", pctDM: 0.03, dedMinPct: 0.005, factor: 0.65, active: true, soloMinimo: true },
         { id: "sub_10", n: "Daños por Inundación producidos por agua", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
         { id: "sub_11", n: "Daños por la acción del agua u otras sustancias liquidas", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
         { id: "sub_12", n: "Derrame y contaminación de Sustancias", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
@@ -1061,7 +1099,7 @@
         { id: "sub_31", n: "Bienes de terceros bajo cuidado, custodia y control", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true }
     ];
 
-    const usuariosSistema = [
+    let usuariosSistema = [
         { u: "admin", p: "admin123", perfil: "admin" },
         { u: "comercial", p: "comercial123", perfil: "comercial" }
     ];
@@ -1099,13 +1137,16 @@
             document.getElementById('user-info-lbl').innerText = `Usuario: ${found.u} (${found.perfil.toUpperCase()})`;
             document.getElementById('login-error').style.display = 'none';
 
+            const adminElems = document.querySelectorAll('.tab-admin-only');
             if (found.perfil === 'admin') {
-                document.getElementById('btn-tab-admin').style.display = 'block';
+                adminElems.forEach(el => el.style.display = 'block');
             } else {
-                document.getElementById('btn-tab-admin').style.display = 'none';
+                adminElems.forEach(el => el.style.display = 'none');
             }
+
             inicializarRubros();
             renderABMUsuarios();
+            renderMatrizTasas();
             registrarLog("LOGIN_EXITOSO", `Inicio de sesión usuario ${u}`);
         } else {
             document.getElementById('login-error').style.display = 'block';
@@ -1120,27 +1161,165 @@
         document.getElementById('login-pass').value = '';
     }
 
-    function crearUsuario() {
+    /* GESTIÓN DE USUARIOS */
+    function guardarUsuario() {
         const u = document.getElementById('abm-user-nombre').value.trim();
         const p = document.getElementById('abm-user-pass').value.trim();
         const perfil = document.getElementById('abm-user-perfil').value;
+        const index = parseInt(document.getElementById('abm-user-index').value);
 
-        if (u && p) {
-            usuariosSistema.push({ u: u, p: p, perfil: perfil });
-            renderABMUsuarios();
-            registrarLog("CREAR_USUARIO", `Nuevo usuario: ${u}`);
-            alert(`Usuario ${u} creado con éxito.`);
+        if (!u || !p) {
+            alert("Por favor, ingrese un usuario y contraseña válidos.");
+            return;
         }
+
+        if (index === -1) {
+            if (usuariosSistema.some(usr => usr.u === u)) {
+                alert("El nombre de usuario ya existe.");
+                return;
+            }
+            usuariosSistema.push({ u: u, p: p, perfil: perfil });
+            registrarLog("ALTA_USUARIO", `Nuevo usuario registrado: ${u} (${perfil})`);
+        } else {
+            usuariosSistema[index] = { u: u, p: p, perfil: perfil };
+            registrarLog("MODIF_USUARIO", `Usuario modificado: ${u} (${perfil})`);
+        }
+
+        limpiarFormUsuario();
+        renderABMUsuarios();
+    }
+
+    function editarUsuario(idx) {
+        const user = usuariosSistema[idx];
+        document.getElementById('abm-user-nombre').value = user.u;
+        document.getElementById('abm-user-pass').value = user.p;
+        document.getElementById('abm-user-perfil').value = user.perfil;
+        document.getElementById('abm-user-index').value = idx;
+
+        document.getElementById('form-user-title').innerText = `Editar Usuario: ${user.u}`;
+        document.getElementById('btn-guardar-user').innerText = "Guardar Cambios";
+        document.getElementById('btn-cancelar-user').style.display = "inline-block";
+    }
+
+    function eliminarUsuario(idx) {
+        const user = usuariosSistema[idx];
+        if (confirm(`¿Está seguro de eliminar al usuario ${user.u}?`)) {
+            usuariosSistema.splice(idx, 1);
+            registrarLog("BAJA_USUARIO", `Usuario eliminado: ${user.u}`);
+            renderABMUsuarios();
+        }
+    }
+
+    function limpiarFormUsuario() {
+        document.getElementById('abm-user-nombre').value = '';
+        document.getElementById('abm-user-pass').value = '';
+        document.getElementById('abm-user-perfil').value = 'comercial';
+        document.getElementById('abm-user-index').value = '-1';
+
+        document.getElementById('form-user-title').innerText = "Agregar Nuevo Usuario";
+        document.getElementById('btn-guardar-user').innerText = "+ Guardar Usuario";
+        document.getElementById('btn-cancelar-user').style.display = "none";
     }
 
     function renderABMUsuarios() {
         const tbody = document.getElementById('tabla-abm-usuarios');
         tbody.innerHTML = '';
-        usuariosSistema.forEach(user => {
+        usuariosSistema.forEach((user, idx) => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${user.u}</td><td><b>${user.perfil.toUpperCase()}</b></td><td>Activo</td>`;
+            tr.innerHTML = `
+                <td>${user.u}</td>
+                <td><b>${user.perfil.toUpperCase()}</b></td>
+                <td><span style="color:var(--success); font-weight:bold;">Activo</span></td>
+                <td class="text-center">
+                    <button class="btn" style="padding: 2px 8px;" onclick="editarUsuario(${idx})">Editar</button>
+                    <button class="btn btn-danger" style="padding: 2px 8px;" onclick="eliminarUsuario(${idx})">Eliminar</button>
+                </td>
+            `;
             tbody.appendChild(tr);
         });
+    }
+
+    /* MATRIZ DE TASAS ACTIVAS */
+    function renderMatrizTasas() {
+        const filter = document.getElementById('admin-search-tasas').value.toLowerCase();
+        const tbody = document.getElementById('tabla-matriz-tasas');
+        tbody.innerHTML = '';
+
+        rubrosTasasData.forEach((item, idx) => {
+            if (item.r.toLowerCase().includes(filter)) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.r}</td>
+                    <td class="text-right"><input type="number" step="0.001" style="width: 100px; text-align: right;" value="${item.te}" id="tasas-te-${idx}"></td>
+                    <td class="text-right"><input type="number" step="0.001" style="width: 100px; text-align: right;" value="${item.tc}" id="tasas-tc-${idx}"></td>
+                    <td class="text-center"><button class="btn btn-success" style="padding: 2px 8px;" onclick="actualizarTasaFila(${idx})">Guardar</button></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+    }
+
+    function actualizarTasaFila(idx) {
+        const te = parseFloat(document.getElementById(`tasas-te-${idx}`).value);
+        const tc = parseFloat(document.getElementById(`tasas-tc-${idx}`).value);
+
+        if (!isNaN(te) && !isNaN(tc)) {
+            rubrosTasasData[idx].te = te;
+            rubrosTasasData[idx].tc = tc;
+            filtrarRubros();
+            seleccionarRubro();
+            registrarLog("MODIF_TASA", `Tasas actualizadas para ${rubrosTasasData[idx].r}: Edif ${te}‰, Cont ${tc}‰`);
+            alert(`Tasa para ${rubrosTasasData[idx].r} actualizada correctamente.`);
+        }
+    }
+
+    function exportarTasasCSV() {
+        let csv = "Actividad / Rubro,Tasa Edificio (‰),Tasa Contenido (‰)\n";
+        rubrosTasasData.forEach(item => {
+            csv += `"${item.r.replace(/"/g, '""')}",${item.te},${item.tc}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'matriz_tasas_tro.csv';
+        a.click();
+        registrarLog("EXPORTAR_TASAS", "Exportación masiva de matriz tarifaria CSV");
+    }
+
+    function importarTasasCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const lines = e.target.result.split('\n');
+            let actualizados = 0;
+
+            lines.forEach((line, index) => {
+                if (index === 0 || !line.trim()) return;
+                const parts = line.split(',');
+                if (parts.length >= 3) {
+                    const rubroNombre = parts[0].replace(/^"|"$/g, '').trim();
+                    const te = parseFloat(parts[1]);
+                    const tc = parseFloat(parts[2]);
+
+                    const target = rubrosTasasData.find(item => item.r.toLowerCase() === rubroNombre.toLowerCase());
+                    if (target && !isNaN(te) && !isNaN(tc)) {
+                        target.te = te;
+                        target.tc = tc;
+                        actualizados++;
+                    }
+                }
+            });
+
+            renderMatrizTasas();
+            filtrarRubros();
+            seleccionarRubro();
+            registrarLog("IMPORTAR_TASAS", `Importación masiva completada: ${actualizados} rubros actualizados`);
+            alert(`Se actualizaron con éxito ${actualizados} actividades desde el archivo CSV.`);
+        };
+        reader.readAsText(file);
     }
 
     function verPestana(tabId) {
@@ -1279,8 +1458,8 @@
 
         // Agregar Coberturas Principales
         propTbody.innerHTML += `
-            <tr><td><b>Edificio (Incendio TRO)</b></td><td class="text-right">${fmt(saEdificio, mon)}</td><td class="text-right">0,05% DM Ubicación</td></tr>
-            <tr><td><b>Contenido General (Incendio TRO)</b></td><td class="text-right">${fmt(saContenidoAfectada, mon)}</td><td class="text-right">0,05% DM Ubicación</td></tr>
+            <tr><td><b>Edificio (Incendio TRO)</b></td><td class="text-right">${fmt(saEdificio, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(saEdificio * 0.0005, mon)}</td></tr>
+            <tr><td><b>Contenido General (Incendio TRO)</b></td><td class="text-right">${fmt(saContenidoAfectada, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(saContenidoAfectada * 0.0005, mon)}</td></tr>
         `;
 
         sublimitesData.forEach((item, idx) => {
@@ -1299,8 +1478,9 @@
             let primaSub = item.active ? saSub * (factorEf / 1000) : 0;
             if (item.active) {
                 primaTotalSublimites += primaSub;
+                const textoDeducible = item.soloMinimo ? fmt(dedMin, mon) : `10% del siniestro con min. de ${fmt(dedMin, mon)}`;
                 propTbody.innerHTML += `
-                    <tr><td>${item.n}</td><td class="text-right">${fmt(saSub, mon)}</td><td class="text-right">${fmt(dedMin, mon)}</td></tr>
+                    <tr><td>${item.n}</td><td class="text-right">${fmt(saSub, mon)}</td><td class="text-right">${textoDeducible}</td></tr>
                 `;
             }
 
