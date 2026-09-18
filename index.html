@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotizador Todo Riesgo Operativo (TRO) - v23</title>
+    <title>Cotizador Todo Riesgo Operativo (TRO) - v24</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -254,7 +254,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <h2>San Cristóbal Seguros</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v23)</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v24)</p>
         <div class="form-group">
             <label>Usuario</label>
             <input type="text" id="login-user">
@@ -269,10 +269,10 @@
 </div>
 
 <div class="container">
-    <header>
+    header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
-            <p>Versión v23 — Leyenda Primer Riesgo Absoluto y Accesos de Administrador</p>
+            <p>Versión v24 — N° Cotización, N° Solicitud y Acceso Directo a Propuesta</p>
         </div>
         <div>
             <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
@@ -282,11 +282,11 @@
 
     <!-- NAVEGACIÓN PRINCIPAL -->
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="verPestana('cotizador')">1. Cotizador TRO</button>
-        <button class="tab-btn" onclick="verPestana('cliente')">2. Propuesta Comercial (Cliente)</button>
+        <button class="tab-btn active" id="btn-tab-cotizador" onclick="verPestana('cotizador')">1. Cotizador TRO</button>
+        <button class="tab-btn" id="btn-tab-cliente" onclick="verPestana('cliente')">2. Propuesta Comercial (Cliente)</button>
         <button class="tab-btn tab-admin-only" id="btn-tab-tasas" onclick="verPestana('tasas')" style="display: none;">3. Matriz de Tasas Activas</button>
         <button class="tab-btn tab-admin-only" id="btn-tab-admin" onclick="verPestana('admin')" style="display: none;">4. Gestión de Usuarios</button>
-        <button class="tab-btn" onclick="verPestana('auditoria')">5. Log de Auditoría</button>
+        <button class="tab-btn" id="btn-tab-auditoria" onclick="verPestana('auditoria')">5. Log de Auditoría</button>
     </div>
 
     <!-- PESTAÑA 1: COTIZADOR PRINCIPAL -->
@@ -296,6 +296,10 @@
             <!-- PUNTO 1 -->
             <div class="card">
                 <h2>1. Identificación de Cliente y Estructura Comercial</h2>
+                <div class="form-row">
+                    <div class="form-group"><label>N° Cotización</label><input type="text" id="cli-num-cotizacion" value="TRO-20260918-0001" oninput="calcular()"></div>
+                    <div class="form-group"><label>N° Solicitud</label><input type="text" id="cli-num-solicitud" value="SOL-854201" oninput="calcular()"></div>
+                </div>
                 <div class="form-row">
                     <div class="form-group"><label>Razón Social / Asegurado</label><input type="text" id="cli-razon-social" value="EMPRESA MODELO S.A." oninput="calcular()"></div>
                     <div class="form-group"><label>CUIT</label><input type="text" id="cli-cuit" value="30-71234567-8" oninput="calcular()"></div>
@@ -309,10 +313,7 @@
 
             <!-- PUNTO 2 -->
             <div class="card">
-                <h2>
-                    2. Datos Generales y Ubicación
-                    <span id="lbl-id-cotizacion" style="font-size: 0.8rem; color: #64748b;">ID: TRO-20260918-0001</span>
-                </h2>
+                <h2>2. Datos Generales y Ubicación</h2>
                 <div class="form-row">
                     <div class="form-group"><label>Vigencia Desde</label><input type="date" id="vigencia-desde" value="2026-09-18" onchange="calcular()"></div>
                     <div class="form-group"><label>Vigencia Hasta</label><input type="date" id="vigencia-hasta" value="2027-09-18" onchange="calcular()"></div>
@@ -592,6 +593,11 @@
                     <div style="margin-top: 5px; font-size: 0.85rem; text-align: right; color: var(--primary);" id="val-plan-cuotas">
                         Plan: 12 cuotas
                     </div>
+                </div>
+
+                <!-- BOTÓN DE NAVEGACIÓN A PROPUESTA COMERCIAL -->
+                <div style="margin-top: 15px; text-align: right;">
+                    <button type="button" class="btn btn-success" style="padding: 10px 18px; font-size: 0.9rem;" onclick="verPestana('cliente')">📄 Ir a Propuesta Comercial</button>
                 </div>
             </div>
 
@@ -1126,7 +1132,7 @@
         { id: "sub_31", n: "Bienes de terceros bajo cuidado, custodia y control", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true }
     ];
 
-    // USUARIOS ACTUALIZADOS (matias.gabrielli / Guille2020 y suscriptor / suscriptor123)
+    // USUARIOS DEL SISTEMA
     let usuariosSistema = [
         { u: "matias.gabrielli", p: "Guille2020", perfil: "admin" },
         { u: "suscriptor", p: "suscriptor123", perfil: "comercial" }
@@ -1380,8 +1386,13 @@
     function verPestana(tabId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
         document.getElementById(`tab-${tabId}`).classList.add('active');
-        if (event && event.target) event.target.classList.add('active');
+        
+        const targetBtn = document.getElementById(`btn-tab-${tabId}`);
+        if (targetBtn) targetBtn.classList.add('active');
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function inicializarRubros() {
@@ -1477,7 +1488,7 @@
         if (document.getElementById('sec-hidrantes').checked) pctSeg += 0.10;
         const factorSeguridad = (1 - pctSeg);
 
-        // OPCIONES DE DEDUCIBLE GENERAL (PUNTO 8)
+        // OPCIONES DE DEDUCIBLE GENERAL
         const optDedGen = document.getElementById('deducible-general-select').value;
         let pctDescDedGen = 0;
         let textoDedGenPropuesta = "";
@@ -1519,7 +1530,6 @@
             saContenidoNominal += getNum(c.id);
         });
 
-        // La suma de contenido que cotiza (para calcular prima) incluye la fluctuación si corresponde
         const saContenidoAfectadaTasa = saContenidoNominal * (1 + pctSwing);
         const saPb = getNum('sa-pb');
         const totalDM = saEdificio + saContenidoAfectadaTasa;
@@ -1565,7 +1575,7 @@
             }
         });
 
-        // RECORRIDO DE SUBLÍMITES (INC. LEYENDA "Primer Riesgo Absoluto")
+        // RECORRIDO DE SUBLÍMITES (CON LEYENDA "Primer Riesgo Absoluto")
         sublimitesData.forEach((item, idx) => {
             let saSub = 0, dedMin = 0;
             const pctEf = item.pctDM * pctAjusteSlider;
@@ -1646,13 +1656,13 @@
         const valorCuota = cuotas > 0 ? premioTotal / cuotas : premioTotal;
         document.getElementById('val-plan-cuotas').innerText = `Plan: ${cuotas} cuota(s) de ${fmt(valorCuota, mon)}`;
 
-        // MIGRACIÓN A PROPUESTA CLIENTE
+        // MIGRACIÓN DINÁMICA A PROPUESTA CLIENTE
         document.getElementById('prop-razon-social').innerText = document.getElementById('cli-razon-social').value;
         document.getElementById('prop-cuit').innerText = document.getElementById('cli-cuit').value;
         document.getElementById('prop-sucursal').innerText = document.getElementById('str-sucursal').value;
         document.getElementById('prop-agente').innerText = document.getElementById('str-agente').value;
         document.getElementById('prop-organizador').innerText = document.getElementById('str-organizador').value;
-        document.getElementById('prop-id').innerText = document.getElementById('lbl-id-cotizacion').innerText;
+        document.getElementById('prop-id').innerText = document.getElementById('cli-num-cotizacion').value;
         document.getElementById('prop-domicilio').innerText = document.getElementById('ubic-domicilio').value + ', ' + provincia;
         
         const selRubro = document.getElementById('rubro-select');
