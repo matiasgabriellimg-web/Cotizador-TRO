@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotizador Todo Riesgo Operativo (TRO) - v21</title>
+    <title>Cotizador Todo Riesgo Operativo (TRO) - v23</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -24,7 +24,7 @@
             padding: 20px;
         }
 
-        .container { max-width: 1450px; margin: 0 auto; }
+        .container { max-width: 1100px; margin: 0 auto; }
 
         /* OVERLAY LOGIN */
         #login-overlay {
@@ -90,8 +90,8 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 20px; }
-        @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+        /* DISEÑO SECUENCIAL VERTICAL DE UNA SOLA COLUMNA */
+        .vertical-layout { display: flex; flex-direction: column; gap: 20px; }
 
         .card {
             background: var(--card-bg);
@@ -99,7 +99,6 @@
             border-radius: 8px;
             padding: 18px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
         }
 
         .card h2 {
@@ -124,7 +123,7 @@
             font-size: 0.82rem;
         }
 
-        input[type="number"], input[type="text"], input[type="password"], input[type="date"], select {
+        input[type="text"], input[type="password"], input[type="date"], select {
             width: 100%;
             padding: 7px 10px;
             border: 1px solid var(--border);
@@ -133,9 +132,19 @@
             font-size: 0.9rem;
         }
 
-        .slider-container { display: flex; align-items: center; gap: 15px; }
+        .formatted-number-input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+            text-align: right;
+        }
+
+        .slider-container { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #eff6ff; padding: 10px; border-radius: 6px; border: 1px solid #bfdbfe; }
         .slider-container input[type="range"] { flex-grow: 1; }
-        .slider-container input[type="number"] { width: 80px; }
+        .slider-container input[type="number"] { width: 80px; text-align: center; }
 
         .checkbox-group {
             display: grid;
@@ -235,7 +244,6 @@
         @media print {
             body { background: white; padding: 0; }
             header, .nav-tabs, .btn, .btn-clear, #tab-admin, #tab-tasas, #tab-auditoria, #login-overlay { display: none !important; }
-            .grid { display: block; }
             .card { border: none; box-shadow: none; padding: 0; margin-bottom: 15px; }
         }
     </style>
@@ -246,14 +254,14 @@
 <div id="login-overlay">
     <div class="login-card">
         <h2>San Cristóbal Seguros</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v21)</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v23)</p>
         <div class="form-group">
             <label>Usuario</label>
-            <input type="text" id="login-user" placeholder="Ej: admin o comercial">
+            <input type="text" id="login-user">
         </div>
         <div class="form-group">
             <label>Contraseña</label>
-            <input type="password" id="login-pass" placeholder="Ej: admin123 o comercial123">
+            <input type="password" id="login-pass">
         </div>
         <button type="button" class="btn btn-success" style="width: 100%; padding: 10px; margin-top: 10px;" onclick="iniciarSesion()">Ingresar al Sistema</button>
         <p id="login-error" style="color: var(--danger); font-size: 0.8rem; margin-top: 10px; display: none;">Usuario o contraseña incorrectos.</p>
@@ -264,7 +272,7 @@
     <header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
-            <p>Versión v21 — Deducible del 10% del Siniestro Integrado</p>
+            <p>Versión v23 — Leyenda Primer Riesgo Absoluto y Accesos de Administrador</p>
         </div>
         <div>
             <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
@@ -283,294 +291,310 @@
 
     <!-- PESTAÑA 1: COTIZADOR PRINCIPAL -->
     <div id="tab-cotizador" class="tab-content active">
-        <div class="grid">
-            <!-- COLUMNA IZQUIERDA -->
-            <div>
-                <!-- DATOS DEL CLIENTE E INTERMEDIARIOS -->
-                <div class="card">
-                    <h2>1. Identificación de Cliente y Estructura Comercial</h2>
-                    <div class="form-row">
-                        <div class="form-group"><label>Razón Social / Asegurado</label><input type="text" id="cli-razon-social" value="EMPRESA MODELO S.A." oninput="calcular()"></div>
-                        <div class="form-group"><label>CUIT</label><input type="text" id="cli-cuit" value="30-71234567-8" oninput="calcular()"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Sucursal</label><input type="text" id="str-sucursal" value="Córdoba (03)" oninput="calcular()"></div>
-                        <div class="form-group"><label>Agente / PAS</label><input type="text" id="str-agente" value="GABRIELLI MATIAS (Cod. 8542)" oninput="calcular()"></div>
-                        <div class="form-group"><label>Organizador</label><input type="text" id="str-organizador" value="ORGANIZACION CENTRAL" oninput="calcular()"></div>
-                    </div>
+        <div class="vertical-layout">
+            
+            <!-- PUNTO 1 -->
+            <div class="card">
+                <h2>1. Identificación de Cliente y Estructura Comercial</h2>
+                <div class="form-row">
+                    <div class="form-group"><label>Razón Social / Asegurado</label><input type="text" id="cli-razon-social" value="EMPRESA MODELO S.A." oninput="calcular()"></div>
+                    <div class="form-group"><label>CUIT</label><input type="text" id="cli-cuit" value="30-71234567-8" oninput="calcular()"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Sucursal</label><input type="text" id="str-sucursal" value="Córdoba (03)" oninput="calcular()"></div>
+                    <div class="form-group"><label>Agente / PAS</label><input type="text" id="str-agente" value="GABRIELLI MATIAS (Cod. 8542)" oninput="calcular()"></div>
+                    <div class="form-group"><label>Organizador</label><input type="text" id="str-organizador" value="ORGANIZACION CENTRAL" oninput="calcular()"></div>
+                </div>
+            </div>
+
+            <!-- PUNTO 2 -->
+            <div class="card">
+                <h2>
+                    2. Datos Generales y Ubicación
+                    <span id="lbl-id-cotizacion" style="font-size: 0.8rem; color: #64748b;">ID: TRO-20260918-0001</span>
+                </h2>
+                <div class="form-row">
+                    <div class="form-group"><label>Vigencia Desde</label><input type="date" id="vigencia-desde" value="2026-09-18" onchange="calcular()"></div>
+                    <div class="form-group"><label>Vigencia Hasta</label><input type="date" id="vigencia-hasta" value="2027-09-18" onchange="calcular()"></div>
                 </div>
 
-                <!-- DATOS GENERALES Y UBICACIÓN -->
-                <div class="card">
-                    <h2>
-                        2. Datos Generales y Ubicación
-                        <span id="lbl-id-cotizacion" style="font-size: 0.8rem; color: #64748b;">ID: TRO-20260916-0001</span>
-                    </h2>
+                <div style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 5px;">
                     <div class="form-row">
-                        <div class="form-group"><label>Vigencia Desde</label><input type="date" id="vigencia-desde" value="2026-09-15" onchange="calcular()"></div>
-                        <div class="form-group"><label>Vigencia Hasta</label><input type="date" id="vigencia-hasta" value="2027-09-15" onchange="calcular()"></div>
-                    </div>
-
-                    <div style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 5px;">
-                        <div class="form-row">
-                            <div class="form-group"><label>Domicilio</label><input type="text" id="ubic-domicilio" value="Gral Savio 4960" oninput="calcular()"></div>
-                            <div class="form-group"><label>Localidad</label><input type="text" id="ubic-localidad" value="Córdoba" oninput="calcular()"></div>
-                            <div class="form-group">
-                                <label>Provincia</label>
-                                <select id="ubic-provincia" onchange="calcular()">
-                                    <option value="BUENOS AIRES">BUENOS AIRES</option>
-                                    <option value="CAPITAL FEDERAL">CAPITAL FEDERAL</option>
-                                    <option value="CATAMARCA">CATAMARCA</option>
-                                    <option value="CHACO">CHACO</option>
-                                    <option value="CHUBUT">CHUBUT</option>
-                                    <option value="CÓRDOBA" selected>CÓRDOBA</option>
-                                    <option value="CORRIENTES">CORRIENTES</option>
-                                    <option value="ENTRE RÍOS">ENTRE RÍOS</option>
-                                    <option value="FORMOSA">FORMOSA</option>
-                                    <option value="JUJUY">JUJUY</option>
-                                    <option value="LA PAMPA">LA PAMPA</option>
-                                    <option value="LA RIOJA">LA RIOJA</option>
-                                    <option value="MENDOZA">MENDOZA</option>
-                                    <option value="MISIONES">MISIONES</option>
-                                    <option value="NEUQUÉN">NEUQUÉN</option>
-                                    <option value="RÍO NEGRO">RÍO NEGRO</option>
-                                    <option value="SALTA">SALTA</option>
-                                    <option value="SAN JUAN">SAN JUAN</option>
-                                    <option value="SAN LUIS">SAN LUIS</option>
-                                    <option value="SANTA CRUZ">SANTA CRUZ</option>
-                                    <option value="SANTA FE">SANTA FE</option>
-                                    <option value="SANTIAGO DEL ESTERO">SANTIAGO DEL ESTERO</option>
-                                    <option value="TIERRA DE FUEGO">TIERRA DE FUEGO</option>
-                                    <option value="TUCUMÁN">TUCUMÁN</option>
-                                </select>
-                            </div>
-                        </div>
+                        <div class="form-group"><label>Domicilio</label><input type="text" id="ubic-domicilio" value="Gral Savio 4960" oninput="calcular()"></div>
+                        <div class="form-group"><label>Localidad</label><input type="text" id="ubic-localidad" value="Córdoba" oninput="calcular()"></div>
                         <div class="form-group">
-                            <label>Tipo de Construcción (Afecta Tasa Edificio)</label>
-                            <select id="tipo-construccion" onchange="calcular()">
-                                <option value="1.0" selected>Mampostería - techo de zinc (Factor 1,00)</option>
-                                <option value="1.0">Mampostería - techo de hormigón (Factor 1,00)</option>
-                                <option value="1.0">Mampostería - techo de teja (Factor 1,00)</option>
-                                <option value="2.0">Prefabricadas (Factor 2,00)</option>
-                                <option value="1.3">Paneleria Sándwich (Factor 1,30)</option>
-                                <option value="1.05">Hasta el 50% de construcción de material (Factor 1,05)</option>
-                                <option value="2.0">Madera (Factor 2,00)</option>
-                                <option value="1.0">Galpón (Factor 1,00)</option>
-                                <option value="1.0">Mampostería - techo de fibrocemento (Factor 1,00)</option>
+                            <label>Provincia</label>
+                            <select id="ubic-provincia" onchange="calcular()">
+                                <option value="BUENOS AIRES">BUENOS AIRES</option>
+                                <option value="CAPITAL FEDERAL">CAPITAL FEDERAL</option>
+                                <option value="CATAMARCA">CATAMARCA</option>
+                                <option value="CHACO">CHACO</option>
+                                <option value="CHUBUT">CHUBUT</option>
+                                <option value="CÓRDOBA" selected>CÓRDOBA</option>
+                                <option value="CORRIENTES">CORRIENTES</option>
+                                <option value="ENTRE RÍOS">ENTRE RÍOS</option>
+                                <option value="FORMOSA">FORMOSA</option>
+                                <option value="JUJUY">JUJUY</option>
+                                <option value="LA PAMPA">LA PAMPA</option>
+                                <option value="LA RIOJA">LA RIOJA</option>
+                                <option value="MENDOZA">MENDOZA</option>
+                                <option value="MISIONES">MISIONES</option>
+                                <option value="NEUQUÉN">NEUQUÉN</option>
+                                <option value="RÍO NEGRO">RÍO NEGRO</option>
+                                <option value="SALTA">SALTA</option>
+                                <option value="SAN JUAN">SAN JUAN</option>
+                                <option value="SAN LUIS">SAN LUIS</option>
+                                <option value="SANTA CRUZ">SANTA CRUZ</option>
+                                <option value="SANTA FE">SANTA FE</option>
+                                <option value="SANTIAGO DEL ESTERO">SANTIAGO DEL ESTERO</option>
+                                <option value="TIERRA DE FUEGO">TIERRA DE FUEGO</option>
+                                <option value="TUCUMÁN">TUCUMÁN</option>
                             </select>
                         </div>
-                        <div style="font-size: 0.82rem; background: #f8fafc; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border);">
-                            Zona Terremoto: <b id="lbl-zona-terremoto">Zona 3</b> | Tasa Edif: <b id="lbl-tasa-eq-edif">0.16 ‰</b> | Tasa Cont: <b id="lbl-tasa-eq-cont">0.08 ‰</b>
-                        </div>
                     </div>
-                </div>
-
-                <!-- RUBRO Y TASAS (296 RUBROS) -->
-                <div class="card">
-                    <h2>3. Actividad y Tasas Asignadas (296 Rubros)</h2>
                     <div class="form-group">
-                        <label for="rubro-search">Buscar Actividad</label>
-                        <input type="text" id="rubro-search" placeholder="Escriba para buscar entre los 296 rubros..." oninput="filtrarRubros()">
-                        <select id="rubro-select" size="5" style="margin-top: 5px;" onchange="seleccionarRubro()"></select>
+                        <label>Tipo de Construcción (Afecta Tasa Edificio)</label>
+                        <select id="tipo-construccion" onchange="calcular()">
+                            <option value="1.0" selected>Mampostería - techo de zinc (Factor 1,00)</option>
+                            <option value="1.0">Mampostería - techo de hormigón (Factor 1,00)</option>
+                            <option value="1.0">Mampostería - techo de teja (Factor 1,00)</option>
+                            <option value="2.0">Prefabricadas (Factor 2,00)</option>
+                            <option value="1.3">Paneleria Sándwich (Factor 1,30)</option>
+                            <option value="1.05">Hasta el 50% de construcción de material (Factor 1,05)</option>
+                            <option value="2.0">Madera (Factor 2,00)</option>
+                            <option value="1.0">Galpón (Factor 1,00)</option>
+                            <option value="1.0">Mampostería - techo de fibrocemento (Factor 1,00)</option>
+                        </select>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px; border-radius: 4px; border: 1px solid var(--border);">
-                        <span style="font-size: 0.85rem; font-weight: 600;">Tasas Base Actividad:</span>
-                        <div>
-                            Edificio: <span id="badge-tasa-edif" class="badge">0.480 ‰</span>
-                            Contenido: <span id="badge-tasa-cont" class="badge">1.000 ‰</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MONEDA, PLAN DE PAGO Y CLÁUSULA SWING -->
-                <div class="card">
-                    <h2>4. Moneda, Plan de Pago y Cláusulas Comerciales</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Moneda</label>
-                            <select id="moneda" onchange="calcular()">
-                                <option value="ARS">Pesos ($)</option>
-                                <option value="USD" selected>Dólares (USD)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Cantidad de Cuotas</label>
-                            <select id="cuotas" onchange="calcular()">
-                                <option value="1">1 Cuota (Sin Recargo)</option>
-                                <option value="2">2 Cuotas</option>
-                                <option value="3">3 Cuotas</option>
-                                <option value="4">4 Cuotas</option>
-                                <option value="5">5 Cuotas</option>
-                                <option value="6">6 Cuotas</option>
-                                <option value="7">7 Cuotas</option>
-                                <option value="8">8 Cuotas</option>
-                                <option value="9">9 Cuotas</option>
-                                <option value="10">10 Cuotas</option>
-                                <option value="11">11 Cuotas</option>
-                                <option value="12" selected>12 Cuotas</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Medio de Pago</label>
-                            <select id="medio-pago" onchange="calcular()">
-                                <option value="efectivo">Efectivo</option>
-                                <option value="debito" selected>Débito (-5% Prima)</option>
-                                <option value="credito">Crédito (-5% Prima)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Cláusula Swing (Margen Fluctución)</label>
-                            <select id="clausula-swing" onchange="calcular()">
-                                <option value="0" selected>Sin Cláusula Swing (0%)</option>
-                                <option value="0.10">Cláusula Swing 10%</option>
-                                <option value="0.20">Cláusula Swing 20%</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Ajuste Comercial Manual (% Prima)</label>
-                            <input type="number" id="ajuste-comercial" min="-90" max="300" value="0" step="1" oninput="calcular()"> %
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MEDIDAS DE SEGURIDAD -->
-                <div class="card">
-                    <h2>5. Medidas de Seguridad (Descuentos Extras)</h2>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item"><input type="checkbox" id="sec-antiexp" onchange="calcular()"> Inst. Antiexplosiva (-5%)</div>
-                        <div class="checkbox-item"><input type="checkbox" id="sec-sprinkler" onchange="calcular()"> Sprinklers (-20%)</div>
-                        <div class="checkbox-item"><input type="checkbox" id="sec-detectores" onchange="calcular()"> Detectores Humo (-5%)</div>
-                        <div class="checkbox-item"><input type="checkbox" id="sec-hidrantes" onchange="calcular()"> Hidrantes (-10%)</div>
-                    </div>
-                </div>
-
-                <!-- SUMAS ASEGURADAS -->
-                <div class="card">
-                    <h2>
-                        6. Sumas Aseguradas
-                        <button type="button" class="btn btn-danger" onclick="borrarSumasAseguradas()">Borrar Sumas</button>
-                    </h2>
-                    <div class="form-group">
-                        <label>Edificio (Tasa Edificio)</label>
-                        <input type="number" id="sa-edificio" value="2500000" oninput="calcular()">
-                    </div>
-                    
-                    <label style="margin-top: 10px; color: var(--primary);">Conceptos con Tasa de Contenido:</label>
-                    <div class="form-row">
-                        <div class="form-group"><label>Contenido General</label><input type="number" id="sa-contenido" value="2000000" oninput="calcular()"></div>
-                        <div class="form-group"><label>Mercadería</label><input type="number" id="sa-mercaderia" value="0" oninput="calcular()"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Materia Prima</label><input type="number" id="sa-mp" value="0" oninput="calcular()"></div>
-                        <div class="form-group"><label>Maquinarias</label><input type="number" id="sa-maquinarias" value="0" oninput="calcular()"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Bienes de uso</label><input type="number" id="sa-bienes-uso" value="0" oninput="calcular()"></div>
-                        <div class="form-group"><label>Equipos electrónicos</label><input type="number" id="sa-equipos-elec" value="0" oninput="calcular()"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Instalaciones</label><input type="number" id="sa-instalaciones" value="0" oninput="calcular()"></div>
-                        <div class="form-group"><label>Insumos</label><input type="number" id="sa-insumos" value="0" oninput="calcular()"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Mercadería bajo warrant</label><input type="number" id="sa-warrant" value="0" oninput="calcular()"></div>
-                        <div class="form-group"><label>Objetos según detalle</label><input type="number" id="sa-objetos" value="0" oninput="calcular()"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Productos Semielaborados</label><input type="number" id="sa-semielab" value="0" oninput="calcular()"></div>
-                        <div class="form-group"><label>Suministros</label><input type="number" id="sa-suministros" value="0" oninput="calcular()"></div>
-                    </div>
-
-                    <div class="form-group" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 10px;">
-                        <label>Pérdida de Beneficios (PB) (Tasa fija 3,00 ‰)</label>
-                        <input type="number" id="sa-pb" value="0" oninput="calcular()">
+                    <div style="font-size: 0.82rem; background: #f8fafc; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border);">
+                        Zona Terremoto: <b id="lbl-zona-terremoto">Zona 3</b> | Tasa Edif: <b id="lbl-tasa-eq-edif">0.16 ‰</b> | Tasa Cont: <b id="lbl-tasa-eq-cont">0.08 ‰</b>
                     </div>
                 </div>
             </div>
 
-            <!-- COLUMNA DERECHA: LIQUIDACIÓN TÉCNICA -->
-            <div>
-                <div class="card">
-                    <h2>
-                        Liquidación de Premio Total
-                        <button type="button" class="btn btn-success" onclick="exportarCSV()">Exportar CSV</button>
-                    </h2>
-                    <table class="summary-table">
+            <!-- PUNTO 3 -->
+            <div class="card">
+                <h2>3. Actividad y Tasas Asignadas (296 Rubros)</h2>
+                <div class="form-group">
+                    <label for="rubro-search">Buscar Actividad</label>
+                    <input type="text" id="rubro-search" placeholder="Escriba para buscar entre los 296 rubros..." oninput="filtrarRubros()">
+                    <select id="rubro-select" size="5" style="margin-top: 5px;" onchange="seleccionarRubro()"></select>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px; border-radius: 4px; border: 1px solid var(--border);">
+                    <span style="font-size: 0.85rem; font-weight: 600;">Tasas Base Actividad:</span>
+                    <div>
+                        Edificio: <span id="badge-tasa-edif" class="badge">0.480 ‰</span>
+                        Contenido: <span id="badge-tasa-cont" class="badge">1.000 ‰</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PUNTO 4 -->
+            <div class="card">
+                <h2>4. Moneda, Plan de Pago y Cláusulas Comerciales</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Moneda</label>
+                        <select id="moneda" onchange="calcular()">
+                            <option value="ARS">Pesos ($)</option>
+                            <option value="USD" selected>Dólares (USD)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad de Cuotas</label>
+                        <select id="cuotas" onchange="calcular()">
+                            <option value="1">1 Cuota (Sin Recargo)</option>
+                            <option value="2">2 Cuotas</option>
+                            <option value="3">3 Cuotas</option>
+                            <option value="4">4 Cuotas</option>
+                            <option value="5">5 Cuotas</option>
+                            <option value="6">6 Cuotas</option>
+                            <option value="7">7 Cuotas</option>
+                            <option value="8">8 Cuotas</option>
+                            <option value="9">9 Cuotas</option>
+                            <option value="10">10 Cuotas</option>
+                            <option value="11">11 Cuotas</option>
+                            <option value="12" selected>12 Cuotas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Medio de Pago</label>
+                        <select id="medio-pago" onchange="calcular()">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="debito" selected>Débito (-5% Prima)</option>
+                            <option value="credito">Crédito (-5% Prima)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cláusula Swing (Margen Fluctución)</label>
+                        <select id="clausula-swing" onchange="calcular()">
+                            <option value="0" selected>Sin Cláusula Swing (0%)</option>
+                            <option value="0.10">Cláusula Swing 10%</option>
+                            <option value="0.20">Cláusula Swing 20%</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ajuste Comercial Manual (% Prima)</label>
+                        <input type="number" id="ajuste-comercial" min="-90" max="300" value="0" step="1" oninput="calcular()"> %
+                    </div>
+                </div>
+            </div>
+
+            <!-- PUNTO 5 -->
+            <div class="card">
+                <h2>5. Medidas de Seguridad (Descuentos Extras)</h2>
+                <div class="checkbox-group">
+                    <div class="checkbox-item"><input type="checkbox" id="sec-antiexp" onchange="calcular()"> Inst. Antiexplosiva (-5%)</div>
+                    <div class="checkbox-item"><input type="checkbox" id="sec-sprinkler" onchange="calcular()"> Sprinklers (-20%)</div>
+                    <div class="checkbox-item"><input type="checkbox" id="sec-detectores" onchange="calcular()"> Detectores Humo (-5%)</div>
+                    <div class="checkbox-item"><input type="checkbox" id="sec-hidrantes" onchange="calcular()"> Hidrantes (-10%)</div>
+                </div>
+            </div>
+
+            <!-- PUNTO 6 -->
+            <div class="card">
+                <h2>
+                    6. Sumas Aseguradas
+                    <button type="button" class="btn btn-danger" onclick="borrarSumasAseguradas()">Borrar Sumas</button>
+                </h2>
+                <div class="form-group">
+                    <label>Edificio (Tasa Edificio)</label>
+                    <input type="text" id="sa-edificio" class="formatted-number-input" value="2.500.000" oninput="formatAndCalculate(this)">
+                </div>
+                
+                <label style="margin-top: 10px; color: var(--primary);">Conceptos con Tasa de Contenido:</label>
+                <div class="form-row">
+                    <div class="form-group"><label>Contenido General</label><input type="text" id="sa-contenido" class="formatted-number-input" value="2.000.000" oninput="formatAndCalculate(this)"></div>
+                    <div class="form-group"><label>Mercadería</label><input type="text" id="sa-mercaderia" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Materia Prima</label><input type="text" id="sa-mp" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                    <div class="form-group"><label>Maquinarias</label><input type="text" id="sa-maquinarias" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Bienes de uso</label><input type="text" id="sa-bienes-uso" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                    <div class="form-group"><label>Equipos electrónicos</label><input type="text" id="sa-equipos-elec" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Instalaciones</label><input type="text" id="sa-instalaciones" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                    <div class="form-group"><label>Insumos</label><input type="text" id="sa-insumos" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Mercadería bajo warrant</label><input type="text" id="sa-warrant" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                    <div class="form-group"><label>Objetos según detalle</label><input type="text" id="sa-objetos" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Productos Semielaborados</label><input type="text" id="sa-semielab" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                    <div class="form-group"><label>Suministros</label><input type="text" id="sa-suministros" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)"></div>
+                </div>
+
+                <div class="form-group" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 10px;">
+                    <label>Pérdida de Beneficios (PB) (Tasa fija 3,00 ‰)</label>
+                    <input type="text" id="sa-pb" class="formatted-number-input" value="0" oninput="formatAndCalculate(this)">
+                </div>
+            </div>
+
+            <!-- PUNTO 7 -->
+            <div class="card">
+                <h2>
+                    7. Sublímites Detallados (31 Coberturas)
+                    <div>
+                        <button type="button" onclick="marcarTodosSublimites(true)" style="font-size:0.75rem; cursor:pointer;">Activar Todos</button>
+                        <button type="button" onclick="marcarTodosSublimites(false)" style="font-size:0.75rem; cursor:pointer;">Desactivar Todos</button>
+                    </div>
+                </h2>
+
+                <div class="slider-container">
+                    <label style="margin:0; font-weight:bold; color:var(--primary);">Ajuste Global de Sublímites (% DM Contenido):</label>
+                    <input type="range" id="pct-dm-slider" min="0" max="100" value="10" oninput="sincronizarPct(this.value)">
+                    <input type="number" id="pct-dm-num" min="0" max="100" value="10" oninput="sincronizarPct(this.value)"> %
+                </div>
+
+                <div class="scrollable-table">
+                    <table class="sublimit-table">
                         <thead>
                             <tr>
-                                <th>Concepto</th>
-                                <th class="text-right">Tasa / Factor</th>
-                                <th class="text-right">Prima ($)</th>
+                                <th class="text-center">Incl.</th>
+                                <th>Sublímite</th>
+                                <th class="text-right">Suma Asegurada</th>
+                                <th class="text-center">Porcentaje de daños materiales contenido</th>
+                                <th class="text-center">Factor ‰</th>
+                                <th class="text-right">Prima</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr><td>Prima Edificio</td><td class="text-right" id="lbl-tasa-edif">-</td><td class="text-right" id="val-prima-edif">-</td></tr>
-                            <tr><td>Prima Contenido</td><td class="text-right" id="lbl-tasa-cont">-</td><td class="text-right" id="val-prima-cont">-</td></tr>
-                            <tr><td>Prima Pérdida de Beneficios (PB)</td><td class="text-right">3,00 ‰</td><td class="text-right" id="val-prima-pb">-</td></tr>
-                            <tr style="background: #fdf2f2;"><td>Prima HVCT</td><td class="text-right" id="lbl-tasa-hvct">0,1425 ‰</td><td class="text-right" id="val-prima-hvct">-</td></tr>
-                            <tr style="background: #fdf2f2;"><td>Prima Granizo</td><td class="text-right" id="lbl-tasa-granizo">0,1425 ‰</td><td class="text-right" id="val-prima-granizo">-</td></tr>
-                            <tr style="background: #f0fdf4;"><td>Prima Terremoto</td><td class="text-right" id="lbl-factor-eq">-</td><td class="text-right" id="val-prima-terremoto">-</td></tr>
-                            <tr style="background: #eff6ff;"><td>Prima Sublímites Activos</td><td class="text-right">Según tabla</td><td class="text-right" id="val-prima-sublimites">-</td></tr>
-                            <tr style="background: #f0fdf4;"><td>Ajuste por Medidas de Seguridad</td><td class="text-right" id="lbl-pct-seg">0%</td><td class="text-right" id="val-ajuste-seg">-</td></tr>
-                            <tr><td>Descuento Medio de Pago</td><td class="text-right" id="lbl-pct-pago">0%</td><td class="text-right" id="val-desc-pago">-</td></tr>
-                            <tr><td>Ajuste Comercial Manual</td><td class="text-right" id="lbl-pct-comercial">0%</td><td class="text-right" id="val-ajuste-comercial">-</td></tr>
-                            <tr style="font-weight: bold; background: #f8fafc;"><td>PRIMA TÉCNICA BASE</td><td class="text-right">-</td><td class="text-right" id="val-prima-tecnica">-</td></tr>
-                            <tr><td>Recargo Financiero</td><td class="text-right" id="lbl-factor-fin">-</td><td class="text-right" id="val-recargo-fin">-</td></tr>
-                            <tr style="font-weight: bold;"><td>SUBTOTAL PRIMA + RECARGO</td><td class="text-right">-</td><td class="text-right" id="val-subtotal-fin">-</td></tr>
-                            <tr><td>Impuestos y Cargas Sociales</td><td class="text-right">35.5% aprox.</td><td class="text-right" id="val-impuestos-total">-</td></tr>
-                        </tbody>
+                        <tbody id="tabla-sublimites"></tbody>
                     </table>
-
-                    <div class="total-box">
-                        <div class="total-row">
-                            <span>PREMIO TOTAL:</span>
-                            <span id="val-premio-total">$ 0</span>
-                        </div>
-                        <div style="margin-top: 5px; font-size: 0.85rem; text-align: right; color: var(--primary);" id="val-plan-cuotas">
-                            Plan: 12 cuotas
-                        </div>
-                    </div>
                 </div>
+            </div>
 
-                <div class="card">
-                    <h2>
-                        Sublímites Detallados (31 Coberturas)
-                        <div>
-                            <button type="button" onclick="marcarTodosSublimites(true)" style="font-size:0.75rem; cursor:pointer;">Activar Todos</button>
-                            <button type="button" onclick="marcarTodosSublimites(false)" style="font-size:0.75rem; cursor:pointer;">Desactivar Todos</button>
-                        </div>
-                    </h2>
-                    <div class="scrollable-table">
-                        <table class="sublimit-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-center">Incl.</th>
-                                    <th>Sublímite</th>
-                                    <th class="text-right">Suma Asegurada</th>
-                                    <th class="text-center">Factor ‰</th>
-                                    <th class="text-right">Prima</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-sublimites"></tbody>
-                        </table>
-                    </div>
+            <!-- PUNTO 8 -->
+            <div class="card">
+                <h2>8. Deducible General</h2>
+                <div class="form-group">
+                    <label>Seleccione la opción de Deducible General (Aplica descuento comercial sobre la prima):</label>
+                    <select id="deducible-general-select" onchange="calcular()">
+                        <option value="opcion1" selected>Opción 1 - 0,05% DE LA SUMA DE DAÑOS MATERIALES POR UBICACIÓN (Descuento 0%)</option>
+                        <option value="opcion2">Opción 2 - 0,1% DE LA SUMA DE DAÑOS MATERIALES POR UBICACIÓN (Descuento 5%)</option>
+                        <option value="opcion3">Opción 3 - 0,15% DE LA SUMA DE DAÑOS MATERIALES POR UBICACIÓN (Descuento 10%)</option>
+                    </select>
                 </div>
+            </div>
 
-                <!-- SECCIÓN 7: AJUSTE GLOBAL DE SUBLÍMITES -->
-                <div class="card">
-                    <h2>7. Ajuste Global de Sublímites (% DM Contenido)</h2>
-                    <div class="form-group">
-                        <label for="pct-dm-num">% Cobertura sobre DM Contenido</label>
-                        <div class="slider-container">
-                            <input type="range" id="pct-dm-slider" min="0" max="100" value="10" oninput="sincronizarPct(this.value)">
-                            <input type="number" id="pct-dm-num" min="0" max="100" value="10" oninput="sincronizarPct(this.value)"> %
-                        </div>
+            <!-- PUNTO 9 -->
+            <div class="card">
+                <h2>9. Observaciones y Notas Adicionales</h2>
+                <div class="form-group">
+                    <textarea id="cot-observaciones" rows="3" style="width:100%; border:1px solid var(--border); border-radius:4px; padding:8px; font-family:inherit;" placeholder="Escriba notas o aclaraciones para la propuesta..." oninput="calcular()"></textarea>
+                </div>
+            </div>
+
+            <!-- PUNTO 10 -->
+            <div class="card">
+                <h2>
+                    10. Liquidación de Premio Total
+                    <button type="button" class="btn btn-success" onclick="exportarCSV()">Exportar CSV</button>
+                </h2>
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Concepto</th>
+                            <th class="text-right">Tasa / Factor</th>
+                            <th class="text-right">Prima ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Prima Edificio</td><td class="text-right" id="lbl-tasa-edif">-</td><td class="text-right" id="val-prima-edif">-</td></tr>
+                        <tr><td>Prima Contenido</td><td class="text-right" id="lbl-tasa-cont">-</td><td class="text-right" id="val-prima-cont">-</td></tr>
+                        <tr><td>Prima Pérdida de Beneficios (PB)</td><td class="text-right">3,00 ‰</td><td class="text-right" id="val-prima-pb">-</td></tr>
+                        <tr style="background: #fdf2f2;"><td>Prima HVCT</td><td class="text-right" id="lbl-tasa-hvct">0,1425 ‰</td><td class="text-right" id="val-prima-hvct">-</td></tr>
+                        <tr style="background: #fdf2f2;"><td>Prima Granizo</td><td class="text-right" id="lbl-tasa-granizo">0,1425 ‰</td><td class="text-right" id="val-prima-granizo">-</td></tr>
+                        <tr style="background: #f0fdf4;"><td>Prima Terremoto</td><td class="text-right" id="lbl-factor-eq">-</td><td class="text-right" id="val-prima-terremoto">-</td></tr>
+                        <tr style="background: #eff6ff;"><td>Prima Sublímites Activos</td><td class="text-right">Según tabla</td><td class="text-right" id="val-prima-sublimites">-</td></tr>
+                        <tr style="background: #f0fdf4;"><td>Ajuste por Medidas de Seguridad</td><td class="text-right" id="lbl-pct-seg">0%</td><td class="text-right" id="val-ajuste-seg">-</td></tr>
+                        <tr><td>Descuento Deducible General</td><td class="text-right" id="lbl-pct-ded-gen">0%</td><td class="text-right" id="val-desc-ded-gen">-</td></tr>
+                        <tr><td>Descuento Medio de Pago</td><td class="text-right" id="lbl-pct-pago">0%</td><td class="text-right" id="val-desc-pago">-</td></tr>
+                        <tr><td>Ajuste Comercial Manual</td><td class="text-right" id="lbl-pct-comercial">0%</td><td class="text-right" id="val-ajuste-comercial">-</td></tr>
+                        <tr style="font-weight: bold; background: #f8fafc;"><td>PRIMA TÉCNICA BASE</td><td class="text-right">-</td><td class="text-right" id="val-prima-tecnica">-</td></tr>
+                        <tr><td>Recargo Financiero</td><td class="text-right" id="lbl-factor-fin">-</td><td class="text-right" id="val-recargo-fin">-</td></tr>
+                        <tr style="font-weight: bold;"><td>SUBTOTAL PRIMA + RECARGO</td><td class="text-right">-</td><td class="text-right" id="val-subtotal-fin">-</td></tr>
+                        <tr><td>Impuestos y Cargas Sociales</td><td class="text-right">35.5% aprox.</td><td class="text-right" id="val-impuestos-total">-</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="total-box">
+                    <div class="total-row">
+                        <span>PREMIO TOTAL:</span>
+                        <span id="val-premio-total">$ 0</span>
+                    </div>
+                    <div style="margin-top: 5px; font-size: 0.85rem; text-align: right; color: var(--primary);" id="val-plan-cuotas">
+                        Plan: 12 cuotas
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -614,6 +638,9 @@
                     <tr>
                         <td colspan="2"><b>Actividad Principal:</b> <span id="prop-actividad">-</span></td>
                         <td><b>Cláusula Swing:</b> <span id="prop-swing">0%</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><b>Deducible General Seleccionado:</b> <span id="prop-deducible-general-lbl" style="font-weight:bold; color:var(--primary);">-</span></td>
                     </tr>
                 </table>
 
@@ -1066,48 +1093,76 @@
 
     // MATRIZ COMPLETA DE 31 SUBLÍMITES
     const sublimitesData = [
-        { id: "sub_1", n: "Bienes Personales", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
-        { id: "sub_2", n: "Bienes refrigerados - Daños por contaminación del refrigerante", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
-        { id: "sub_3", n: "Bienes refrigerados - Daños por falta o exceso de frío", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
-        { id: "sub_4", n: "Bienes temporariamente trasladados", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.26, active: true },
-        { id: "sub_5", n: "Cláusula de daño eléctrico", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.39, active: true },
-        { id: "sub_6", n: "Cláusula de limitación de los riesgos de huelga, lockout, cesación, disminución o incremento de actividades", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
-        { id: "sub_7", n: "Cobertura de rotura de maquinaria", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
-        { id: "sub_8", n: "Combustión espontánea (Con existencia de termocuplas)", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.39, active: true },
-        { id: "sub_9", n: "Cristales", type: "PCT_DM", pctDM: 0.03, dedMinPct: 0.005, factor: 0.65, active: true, soloMinimo: true },
-        { id: "sub_10", n: "Daños por Inundación producidos por agua", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
-        { id: "sub_11", n: "Daños por la acción del agua u otras sustancias liquidas", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
-        { id: "sub_12", n: "Derrame y contaminación de Sustancias", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
-        { id: "sub_13", n: "Equipos del asegurado", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.52, active: true },
-        { id: "sub_14", n: "Equipos electrónicos", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
-        { id: "sub_15", n: "Exhibiciones, ferias y exposiciones", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
-        { id: "sub_16", n: "Impacto de vehículos", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.13, active: true },
-        { id: "sub_17", n: "Incorporación automática de bienes", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.13, active: true },
-        { id: "sub_18", n: "Modelos, moldes y clises", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
-        { id: "sub_19", n: "Obras de construcción y/o Montaje", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
-        { id: "sub_20", n: "Reconstrucción de documentos y/o archivos", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
-        { id: "sub_21", n: "Robo de valores en tránsito", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 2.60, active: true },
-        { id: "sub_22", n: "Robo de contenido General (Incluyendo mercaderías)", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 1.04, active: true },
-        { id: "sub_23", n: "Robo de valores en caja", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 1.56, active: true },
-        { id: "sub_24", n: "Responsabilidad Civil Linderos", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.26, active: true },
-        { id: "sub_25", n: "Gastos de aceleración o costos extras", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
-        { id: "sub_26", n: "Gastos de limpieza y/o Remoción de Escombros", type: "EDIF_5", pctDM: 0.05, dedMinPct: 0, factor: 0.39, active: true },
-        { id: "sub_27", n: "Honorarios profesionales", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
-        { id: "sub_28", n: "Bienes propios en ubicaciones de terceros", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true },
-        { id: "sub_29", n: "Gastos de extinción de incendio", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
-        { id: "sub_30", n: "Equipos electrónicos móviles o portátiles en Territorio Nacional", type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 1.04, active: true },
-        { id: "sub_31", n: "Bienes de terceros bajo cuidado, custodia y control", type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true }
+        { id: "sub_1", n: "Bienes Personales", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_2", n: "Bienes refrigerados - Daños por contaminación del refrigerante", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_3", n: "Bienes refrigerados - Daños por falta o exceso de frío", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_4", n: "Bienes temporariamente trasladados", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_5", n: "Cláusula de daño eléctrico", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_6", n: "Cláusula de limitación de los riesgos de huelga, lockout, cesación, disminución o incremento de actividades", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_7", n: "Cobertura de rotura de maquinaria", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_8", n: "Combustión espontánea (Con existencia de termocuplas)", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_9", n: "Cristales", maxPct: 0.03, type: "PCT_DM", pctDM: 0.03, dedMinPct: 0.005, factor: 0.65, active: true, soloMinimo: true },
+        { id: "sub_10", n: "Daños por Inundación producidos por agua", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_11", n: "Daños por la acción del agua u otras sustancias liquidas", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_12", n: "Derrame y contaminación de Sustancias", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_13", n: "Equipos del asegurado", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.52, active: true },
+        { id: "sub_14", n: "Equipos electrónicos", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_15", n: "Exhibiciones, ferias y exposiciones", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_16", n: "Impacto de vehículos", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_17", n: "Incorporación automática de bienes", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_18", n: "Modelos, moldes y clises", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_19", n: "Obras de construcción y/o Montaje", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.39, active: true },
+        { id: "sub_20", n: "Reconstrucción de documentos y/o archivos", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_21", n: "Robo de valores en tránsito", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 2.60, active: true },
+        { id: "sub_22", n: "Robo de contenido General (Incluyendo mercaderías)", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 1.04, active: true },
+        { id: "sub_23", n: "Robo de valores en caja", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 1.56, active: true },
+        { id: "sub_24", n: "Responsabilidad Civil Linderos", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_25", n: "Gastos de aceleración o costos extras", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_26", n: "Gastos de limpieza y/o Remoción de Escombros", maxPct: 0.05, type: "EDIF_5", pctDM: 0.05, dedMinPct: 0, factor: 0.39, active: true },
+        { id: "sub_27", n: "Honorarios profesionales", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.26, active: true },
+        { id: "sub_28", n: "Bienes propios en ubicaciones de terceros", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true },
+        { id: "sub_29", n: "Gastos de extinción de incendio", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.13, active: true },
+        { id: "sub_30", n: "Equipos electrónicos móviles o portátiles en Territorio Nacional", maxPct: 0.10, type: "PCT_DM", pctDM: 0.10, dedMinPct: 0.005, factor: 1.04, active: true },
+        { id: "sub_31", n: "Bienes de terceros bajo cuidado, custodia y control", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true }
     ];
 
+    // USUARIOS ACTUALIZADOS (matias.gabrielli / Guille2020 y suscriptor / suscriptor123)
     let usuariosSistema = [
         { u: "matias.gabrielli", p: "Guille2020", perfil: "admin" },
-        { u: "comercial", p: "comercial123", perfil: "comercial" }
+        { u: "suscriptor", p: "suscriptor123", perfil: "comercial" }
     ];
 
     let usuarioActual = null;
     let auditLogs = [];
     let tasaEdifActual = 0.48;
     let tasaContActual = 1.00;
+
+    function parseFormattedNumber(val) {
+        if (!val) return 0;
+        const clean = val.toString().replace(/\./g, '').replace(',', '.');
+        return parseFloat(clean) || 0;
+    }
+
+    function formatNumberString(val) {
+        const num = parseFormattedNumber(val);
+        if (num === 0) return "0";
+        return new Intl.NumberFormat('es-AR').format(num);
+    }
+
+    function formatAndCalculate(inputEl) {
+        const cursorPosition = inputEl.selectionStart;
+        const originalLength = inputEl.value.length;
+        
+        inputEl.value = formatNumberString(inputEl.value);
+        
+        const newLength = inputEl.value.length;
+        const newCursorPosition = cursorPosition + (newLength - originalLength);
+        try {
+            inputEl.setSelectionRange(newCursorPosition, newCursorPosition);
+        } catch(e) {}
+
+        calcular();
+    }
 
     function registrarLog(accion, detalle) {
         const rol = usuarioActual ? usuarioActual.perfil.toUpperCase() : "INVITADO";
@@ -1373,7 +1428,7 @@
     function borrarSumasAseguradas() {
         ['sa-edificio', 'sa-contenido', 'sa-mercaderia', 'sa-mp', 'sa-maquinarias', 'sa-bienes-uso', 'sa-equipos-elec', 'sa-instalaciones', 'sa-insumos', 'sa-warrant', 'sa-objetos', 'sa-semielab', 'sa-suministros', 'sa-pb'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = 0;
+            if (el) el.value = "0";
         });
         calcular();
     }
@@ -1400,7 +1455,10 @@
         return sym + new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(num);
     }
 
-    function getNum(id) { return parseFloat(document.getElementById(id).value) || 0; }
+    function getNum(id) {
+        const val = document.getElementById(id).value;
+        return parseFormattedNumber(val);
+    }
 
     function calcular() {
         const mon = document.getElementById('moneda').value;
@@ -1419,34 +1477,69 @@
         if (document.getElementById('sec-hidrantes').checked) pctSeg += 0.10;
         const factorSeguridad = (1 - pctSeg);
 
+        // OPCIONES DE DEDUCIBLE GENERAL (PUNTO 8)
+        const optDedGen = document.getElementById('deducible-general-select').value;
+        let pctDescDedGen = 0;
+        let textoDedGenPropuesta = "";
+
+        if (optDedGen === "opcion1") {
+            pctDescDedGen = 0;
+            textoDedGenPropuesta = "0,05% DE LA SUMA DE DAÑOS MATERIALES POR UBICACIÓN";
+        } else if (optDedGen === "opcion2") {
+            pctDescDedGen = 0.05;
+            textoDedGenPropuesta = "0,1% DE LA SUMA DE DAÑOS MATERIALES POR UBICACIÓN";
+        } else if (optDedGen === "opcion3") {
+            pctDescDedGen = 0.10;
+            textoDedGenPropuesta = "0,15% DE LA SUMA DE DAÑOS MATERIALES POR UBICACIÓN";
+        }
+
         const zonaEq = zonasProvincias[provincia] || 3;
         const tasasEq = tasasTerremoto[zonaEq] || tasasTerremoto[3];
 
         const saEdificio = getNum('sa-edificio');
-        const saContenidoNominal = getNum('sa-contenido') + getNum('sa-mercaderia') + getNum('sa-mp') + getNum('sa-maquinarias') +
-                                  getNum('sa-bienes-uso') + getNum('sa-equipos-elec') + getNum('sa-instalaciones') +
-                                  getNum('sa-insumos') + getNum('sa-warrant') + getNum('sa-objetos') +
-                                  getNum('sa-semielab') + getNum('sa-suministros');
-        const saContenidoAfectada = saContenidoNominal * (1 + pctSwing);
-        const saPb = getNum('sa-pb');
-        const totalDM = saEdificio + saContenidoAfectada;
+        
+        // CONCEPTOS INDIVIDUALES DE CONTENIDO
+        const conceptosContenido = [
+            { id: 'sa-contenido', label: 'Contenido general' },
+            { id: 'sa-mercaderia', label: 'Mercaderías' },
+            { id: 'sa-mp', label: 'Materia Prima' },
+            { id: 'sa-maquinarias', label: 'Maquinarias' },
+            { id: 'sa-bienes-uso', label: 'Bienes de uso' },
+            { id: 'sa-equipos-elec', label: 'Equipos electrónicos' },
+            { id: 'sa-instalaciones', label: 'Instalaciones' },
+            { id: 'sa-insumos', label: 'Insumos' },
+            { id: 'sa-warrant', label: 'Mercadería bajo warrant' },
+            { id: 'sa-objetos', label: 'Objetos según detalle' },
+            { id: 'sa-semielab', label: 'Productos Semielaborados' },
+            { id: 'sa-suministros', label: 'Suministros' }
+        ];
 
-        const tasaEfEdif = tasaEdifActual * factorConstruccion * factorPago * factorSeguridad;
-        const tasaEfCont = tasaContActual * factorPago * factorSeguridad;
-        const tasaEfPB = 3.00 * factorPago * factorSeguridad;
+        let saContenidoNominal = 0;
+        conceptosContenido.forEach(c => {
+            saContenidoNominal += getNum(c.id);
+        });
+
+        // La suma de contenido que cotiza (para calcular prima) incluye la fluctuación si corresponde
+        const saContenidoAfectadaTasa = saContenidoNominal * (1 + pctSwing);
+        const saPb = getNum('sa-pb');
+        const totalDM = saEdificio + saContenidoAfectadaTasa;
+
+        const tasaEfEdif = tasaEdifActual * factorConstruccion * factorPago * factorSeguridad * (1 - pctDescDedGen);
+        const tasaEfCont = tasaContActual * factorPago * factorSeguridad * (1 - pctDescDedGen);
+        const tasaEfPB = 3.00 * factorPago * factorSeguridad * (1 - pctDescDedGen);
 
         const pEdif = saEdificio * (tasaEfEdif / 1000);
-        const pCont = saContenidoAfectada * (tasaEfCont / 1000);
+        const pCont = saContenidoAfectadaTasa * (tasaEfCont / 1000);
         const pPB = saPb * (tasaEfPB / 1000);
 
-        const tasaEfHVCT = 0.15 * factorPago * factorSeguridad;
-        const tasaEfGranizo = 0.15 * factorPago * factorSeguridad;
+        const tasaEfHVCT = 0.15 * factorPago * factorSeguridad * (1 - pctDescDedGen);
+        const tasaEfGranizo = 0.15 * factorPago * factorSeguridad * (1 - pctDescDedGen);
         const pHVCT = totalDM * (tasaEfHVCT / 1000);
         const pGranizo = totalDM * (tasaEfGranizo / 1000);
 
-        const tasaEfEqEdif = tasasEq.edif * factorPago * factorSeguridad;
-        const tasaEfEqCont = tasasEq.cont * factorPago * factorSeguridad;
-        const pTerremoto = (saEdificio * (tasaEfEqEdif / 1000)) + (saContenidoAfectada * (tasaEfEqCont / 1000));
+        const tasaEfEqEdif = tasasEq.edif * factorPago * factorSeguridad * (1 - pctDescDedGen);
+        const tasaEfEqCont = tasasEq.cont * factorPago * factorSeguridad * (1 - pctDescDedGen);
+        const pTerremoto = (saEdificio * (tasaEfEqEdif / 1000)) + (saContenidoAfectadaTasa * (tasaEfEqCont / 1000));
 
         const pctAjusteSlider = (parseFloat(document.getElementById('pct-dm-num').value) || 0) / 100;
         let primaTotalSublimites = 0;
@@ -1456,19 +1549,30 @@
         tbody.innerHTML = '';
         propTbody.innerHTML = '';
 
-        // Agregar Coberturas Principales
-        propTbody.innerHTML += `
-            <tr><td><b>Edificio (Incendio TRO)</b></td><td class="text-right">${fmt(saEdificio, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(saEdificio * 0.0005, mon)}</td></tr>
-            <tr><td><b>Contenido General (Incendio TRO)</b></td><td class="text-right">${fmt(saContenidoAfectada, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(saContenidoAfectada * 0.0005, mon)}</td></tr>
-        `;
+        // IMPRESIÓN EN PROPUESTA COMERCIAL
+        if (saEdificio > 0) {
+            propTbody.innerHTML += `
+                <tr><td><b>Edificio Sección A - Daños Materiales – Prorrata</b></td><td class="text-right">${fmt(saEdificio, mon)}</td><td class="text-right">SECCION A</td></tr>
+            `;
+        }
 
+        conceptosContenido.forEach(c => {
+            const valSumaConcepto = getNum(c.id);
+            if (valSumaConcepto > 0) {
+                propTbody.innerHTML += `
+                    <tr><td><b>${c.label} Sección A - Daños Materiales – Prorrata</b></td><td class="text-right">${fmt(valSumaConcepto, mon)}</td><td class="text-right">SECCION A</td></tr>
+                `;
+            }
+        });
+
+        // RECORRIDO DE SUBLÍMITES (INC. LEYENDA "Primer Riesgo Absoluto")
         sublimitesData.forEach((item, idx) => {
             let saSub = 0, dedMin = 0;
             const pctEf = item.pctDM * pctAjusteSlider;
-            const factorEf = item.factor * factorPago * factorSeguridad;
+            const factorEf = item.factor * factorPago * factorSeguridad * (1 - pctDescDedGen);
 
             if (item.type === "PCT_DM") {
-                saSub = saContenidoAfectada * pctEf;
+                saSub = saContenidoNominal * pctEf;
                 dedMin = saSub * item.dedMinPct;
             } else if (item.type === "EDIF_5") {
                 saSub = saEdificio * 0.05;
@@ -1480,7 +1584,7 @@
                 primaTotalSublimites += primaSub;
                 const textoDeducible = item.soloMinimo ? fmt(dedMin, mon) : `10% del siniestro con min. de ${fmt(dedMin, mon)}`;
                 propTbody.innerHTML += `
-                    <tr><td>${item.n}</td><td class="text-right">${fmt(saSub, mon)}</td><td class="text-right">${textoDeducible}</td></tr>
+                    <tr><td>${item.n} - Primer Riesgo Absoluto</td><td class="text-right">${fmt(saSub, mon)}</td><td class="text-right">${textoDeducible}</td></tr>
                 `;
             }
 
@@ -1490,6 +1594,7 @@
                 <td class="text-center"><input type="checkbox" ${item.active ? 'checked' : ''} onchange="toggleSublimite(${idx}, this.checked)"></td>
                 <td>${item.n}</td>
                 <td class="text-right">${item.active ? fmt(saSub, mon) : 'EXCLUIDO'}</td>
+                <td class="text-center">${(item.maxPct * 100).toFixed(2)} %</td>
                 <td class="text-center">${factorEf.toFixed(4)} ‰</td>
                 <td class="text-right">${item.active ? fmt(primaSub, mon) : '$ 0'}</td>
             `;
@@ -1499,8 +1604,10 @@
         const primaBaseSinSeguridad = (pEdif + pCont + pPB + pHVCT + pGranizo + pTerremoto + primaTotalSublimites) / (factorSeguridad || 1);
         const valAjusteSeg = -(primaBaseSinSeguridad * pctSeg);
 
+        const valDescDedGen = -(primaBaseSinSeguridad * pctDescDedGen);
+
         const pctComercial = getNum('ajuste-comercial') / 100;
-        const valAjusteComercial = (primaBaseSinSeguridad + valAjusteSeg) * pctComercial;
+        const valAjusteComercial = (primaBaseSinSeguridad + valAjusteSeg + valDescDedGen) * pctComercial;
 
         const primaTecnica = (pEdif + pCont + pPB + pHVCT + pGranizo + pTerremoto + primaTotalSublimites) + valAjusteComercial;
 
@@ -1523,6 +1630,10 @@
 
         document.getElementById('lbl-pct-seg').innerText = '-' + (pctSeg * 100).toFixed(0) + '%';
         document.getElementById('val-ajuste-seg').innerText = fmt(valAjusteSeg, mon);
+
+        document.getElementById('lbl-pct-ded-gen').innerText = '-' + (pctDescDedGen * 100).toFixed(0) + '%';
+        document.getElementById('val-desc-ded-gen').innerText = fmt(valDescDedGen, mon);
+
         document.getElementById('lbl-pct-comercial').innerText = (pctComercial * 100).toFixed(0) + '%';
         document.getElementById('val-ajuste-comercial').innerText = fmt(valAjusteComercial, mon);
 
@@ -1549,6 +1660,7 @@
         document.getElementById('prop-actividad').innerText = actNombre;
         document.getElementById('prop-vigencia').innerText = `${document.getElementById('vigencia-desde').value} al ${document.getElementById('vigencia-hasta').value}`;
         document.getElementById('prop-swing').innerText = (pctSwing * 100) + '%';
+        document.getElementById('prop-deducible-general-lbl').innerText = textoDedGenPropuesta;
         document.getElementById('prop-premio-total').innerText = fmt(premioTotal, mon);
         document.getElementById('prop-plan-cuotas').innerText = `Plan propuesto: ${cuotas} cuotas de ${fmt(valorCuota, mon)}`;
     }
