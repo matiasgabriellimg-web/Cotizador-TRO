@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotizador Todo Riesgo Operativo (TRO) - v24</title>
+    <title>Cotizador Todo Riesgo Operativo (TRO) - v25</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -254,7 +254,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <h2>San Cristóbal Seguros</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v24)</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v25)</p>
         <div class="form-group">
             <label>Usuario</label>
             <input type="text" id="login-user">
@@ -269,10 +269,10 @@
 </div>
 
 <div class="container">
-    header>
+    <header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
-            <p>Versión v24 — N° Cotización, N° Solicitud y Acceso Directo a Propuesta</p>
+            <p>Versión v25 — Sublímites Full Value y Observaciones en Propuesta Comercial</p>
         </div>
         <div>
             <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
@@ -595,7 +595,6 @@
                     </div>
                 </div>
 
-                <!-- BOTÓN DE NAVEGACIÓN A PROPUESTA COMERCIAL -->
                 <div style="margin-top: 15px; text-align: right;">
                     <button type="button" class="btn btn-success" style="padding: 10px 18px; font-size: 0.9rem;" onclick="verPestana('cliente')">📄 Ir a Propuesta Comercial</button>
                 </div>
@@ -668,6 +667,12 @@
                         <span id="prop-premio-total">$ 0</span>
                     </div>
                     <div style="margin-top: 5px; font-size: 0.95rem; text-align: right; color: var(--primary);" id="prop-plan-cuotas">12 cuotas</div>
+                </div>
+
+                <!-- SECCIÓN DE OBSERVACIONES Y NOTAS EN PROPUESTA -->
+                <div id="prop-observaciones-box" style="margin-top: 15px; font-size: 0.82rem; background: #fffbe3; border: 1px solid #ffe58f; padding: 10px; border-radius: 6px; display: none;">
+                    <b style="color: #873800;">OBSERVACIONES Y NOTAS ADICIONALES:</b>
+                    <p id="prop-observaciones-texto" style="margin: 5px 0 0 0; white-space: pre-wrap; color: #1e293b;"></p>
                 </div>
 
                 <div class="policy-conditions">
@@ -1559,7 +1564,7 @@
         tbody.innerHTML = '';
         propTbody.innerHTML = '';
 
-        // IMPRESIÓN EN PROPUESTA COMERCIAL
+        // IMPRESIÓN EN PROPUESTA COMERCIAL - SECCIÓN A
         if (saEdificio > 0) {
             propTbody.innerHTML += `
                 <tr><td><b>Edificio Sección A - Daños Materiales – Prorrata</b></td><td class="text-right">${fmt(saEdificio, mon)}</td><td class="text-right">SECCION A</td></tr>
@@ -1574,6 +1579,25 @@
                 `;
             }
         });
+
+        // COBERTURAS FULL VALUE EN PROPUESTA COMERCIAL
+        if (totalDM > 0) {
+            if (pTerremoto > 0) {
+                propTbody.innerHTML += `
+                    <tr><td>Extensión de Terremoto - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDM, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDM * 0.005, mon)}</td></tr>
+                `;
+            }
+            if (pHVCT > 0) {
+                propTbody.innerHTML += `
+                    <tr><td>Huracán, vendaval, ciclón y tornado (HVCT) - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDM, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDM * 0.005, mon)}</td></tr>
+                `;
+            }
+            if (pGranizo > 0) {
+                propTbody.innerHTML += `
+                    <tr><td>Granizo - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDM, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDM * 0.005, mon)}</td></tr>
+                `;
+            }
+        }
 
         // RECORRIDO DE SUBLÍMITES (CON LEYENDA "Primer Riesgo Absoluto")
         sublimitesData.forEach((item, idx) => {
@@ -1673,6 +1697,16 @@
         document.getElementById('prop-deducible-general-lbl').innerText = textoDedGenPropuesta;
         document.getElementById('prop-premio-total').innerText = fmt(premioTotal, mon);
         document.getElementById('prop-plan-cuotas').innerText = `Plan propuesto: ${cuotas} cuotas de ${fmt(valorCuota, mon)}`;
+
+        // IMPRESIÓN DE OBSERVACIONES EN LA PROPUESTA
+        const obsTexto = document.getElementById('cot-observaciones').value.trim();
+        const obsBox = document.getElementById('prop-observaciones-box');
+        if (obsTexto !== "") {
+            document.getElementById('prop-observaciones-texto').innerText = obsTexto;
+            obsBox.style.display = 'block';
+        } else {
+            obsBox.style.display = 'none';
+        }
     }
 
     function exportarCSV() {
