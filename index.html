@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotizador Todo Riesgo Operativo (TRO) - v25</title>
+    <title>Cotizador Todo Riesgo Operativo (TRO) - v26</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -242,6 +242,7 @@
         }
 
         @media print {
+            @page { margin: 10mm; }
             body { background: white; padding: 0; }
             header, .nav-tabs, .btn, .btn-clear, #tab-admin, #tab-tasas, #tab-auditoria, #login-overlay { display: none !important; }
             .card { border: none; box-shadow: none; padding: 0; margin-bottom: 15px; }
@@ -254,7 +255,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <h2>San Cristóbal Seguros</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v25)</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v26)</p>
         <div class="form-group">
             <label>Usuario</label>
             <input type="text" id="login-user">
@@ -272,7 +273,7 @@
     <header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
-            <p>Versión v25 — Sublímites Full Value y Observaciones en Propuesta Comercial</p>
+            <p>Versión v26</p>
         </div>
         <div>
             <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
@@ -1537,6 +1538,11 @@
 
         const saContenidoAfectadaTasa = saContenidoNominal * (1 + pctSwing);
         const saPb = getNum('sa-pb');
+        
+        // SUMA NOMINAL SIN CLÁUSULA SWING (Para exhibición en propuesta comercial)
+        const totalDMNominal = saEdificio + saContenidoNominal;
+        
+        // SUMA AFECTADA POR CLÁUSULA SWING (Para cálculo tarifario de primas)
         const totalDM = saEdificio + saContenidoAfectadaTasa;
 
         const tasaEfEdif = tasaEdifActual * factorConstruccion * factorPago * factorSeguridad * (1 - pctDescDedGen);
@@ -1580,21 +1586,21 @@
             }
         });
 
-        // COBERTURAS FULL VALUE EN PROPUESTA COMERCIAL
-        if (totalDM > 0) {
+        // COBERTURAS FULL VALUE EN PROPUESTA COMERCIAL (Calculadas exclusivamente con totalDMNominal)
+        if (totalDMNominal > 0) {
             if (pTerremoto > 0) {
                 propTbody.innerHTML += `
-                    <tr><td>Extensión de Terremoto - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDM, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDM * 0.005, mon)}</td></tr>
+                    <tr><td>Extensión de Terremoto - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
                 `;
             }
             if (pHVCT > 0) {
                 propTbody.innerHTML += `
-                    <tr><td>Huracán, vendaval, ciclón y tornado (HVCT) - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDM, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDM * 0.005, mon)}</td></tr>
+                    <tr><td>Huracán, vendaval, ciclón y tornado (HVCT) - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
                 `;
             }
             if (pGranizo > 0) {
                 propTbody.innerHTML += `
-                    <tr><td>Granizo - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDM, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDM * 0.005, mon)}</td></tr>
+                    <tr><td>Granizo - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
                 `;
             }
         }
