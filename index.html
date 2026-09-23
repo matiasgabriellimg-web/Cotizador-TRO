@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotizador Todo Riesgo Operativo (TRO) - v26</title>
+    <title>Cotizador Todo Riesgo Operativo (TRO) - v27</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -255,7 +255,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <h2>San Cristóbal Seguros</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v26)</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v27)</p>
         <div class="form-group">
             <label>Usuario</label>
             <input type="text" id="login-user">
@@ -273,7 +273,7 @@
     <header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
-            <p>Versión v26</p>
+            <p>Versión v27</p>
         </div>
         <div>
             <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
@@ -529,6 +529,16 @@
                         </thead>
                         <tbody id="tabla-sublimites"></tbody>
                     </table>
+                </div>
+
+                <!-- COBERTURAS ADICIONALES PRINCIPALES OPCIONALES -->
+                <div style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 12px; background: #f8fafc; padding: 12px; border-radius: 6px;">
+                    <label style="color: var(--primary); font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; display: block;">Adicionales de Cobertura Principal (Full Value Prorrata):</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item"><input type="checkbox" id="chk-terremoto" checked onchange="calcular()"> <b>Extensión de Terremoto</b></div>
+                        <div class="checkbox-item"><input type="checkbox" id="chk-hvct" checked onchange="calcular()"> <b>Huracán, vendaval, ciclón y tornado (HVCT)</b></div>
+                        <div class="checkbox-item"><input type="checkbox" id="chk-granizo" checked onchange="calcular()"> <b>Granizo</b></div>
+                    </div>
                 </div>
             </div>
 
@@ -1483,6 +1493,11 @@
         const medioPago = document.getElementById('medio-pago').value;
         const provincia = document.getElementById('ubic-provincia').value;
 
+        // ESTADO DE CHECKBOXES ADICIONALES OPCIONALES
+        const inclTerremoto = document.getElementById('chk-terremoto').checked;
+        const inclHVCT = document.getElementById('chk-hvct').checked;
+        const inclGranizo = document.getElementById('chk-granizo').checked;
+
         const factorPago = (medioPago === 'debito' || medioPago === 'credito') ? 0.95 : 1.0;
         const factorConstruccion = parseFloat(document.getElementById('tipo-construccion').value) || 1.0;
         const pctSwing = parseFloat(document.getElementById('clausula-swing').value) || 0;
@@ -1539,10 +1554,10 @@
         const saContenidoAfectadaTasa = saContenidoNominal * (1 + pctSwing);
         const saPb = getNum('sa-pb');
         
-        // SUMA NOMINAL SIN CLÁUSULA SWING (Para exhibición en propuesta comercial)
+        // SUMA NOMINAL SIN CLÁUSULA SWING
         const totalDMNominal = saEdificio + saContenidoNominal;
         
-        // SUMA AFECTADA POR CLÁUSULA SWING (Para cálculo tarifario de primas)
+        // SUMA AFECTADA POR CLÁUSULA SWING (Para cálculo de primas)
         const totalDM = saEdificio + saContenidoAfectadaTasa;
 
         const tasaEfEdif = tasaEdifActual * factorConstruccion * factorPago * factorSeguridad * (1 - pctDescDedGen);
@@ -1555,12 +1570,14 @@
 
         const tasaEfHVCT = 0.15 * factorPago * factorSeguridad * (1 - pctDescDedGen);
         const tasaEfGranizo = 0.15 * factorPago * factorSeguridad * (1 - pctDescDedGen);
-        const pHVCT = totalDM * (tasaEfHVCT / 1000);
-        const pGranizo = totalDM * (tasaEfGranizo / 1000);
+        
+        // CÁLCULO CONDICIONAL DE PRIMAS SEGÚN CHECKBOXES
+        const pHVCT = inclHVCT ? totalDM * (tasaEfHVCT / 1000) : 0;
+        const pGranizo = inclGranizo ? totalDM * (tasaEfGranizo / 1000) : 0;
 
         const tasaEfEqEdif = tasasEq.edif * factorPago * factorSeguridad * (1 - pctDescDedGen);
         const tasaEfEqCont = tasasEq.cont * factorPago * factorSeguridad * (1 - pctDescDedGen);
-        const pTerremoto = (saEdificio * (tasaEfEqEdif / 1000)) + (saContenidoAfectadaTasa * (tasaEfEqCont / 1000));
+        const pTerremoto = inclTerremoto ? ((saEdificio * (tasaEfEqEdif / 1000)) + (saContenidoAfectadaTasa * (tasaEfEqCont / 1000))) : 0;
 
         const pctAjusteSlider = (parseFloat(document.getElementById('pct-dm-num').value) || 0) / 100;
         let primaTotalSublimites = 0;
@@ -1586,21 +1603,21 @@
             }
         });
 
-        // COBERTURAS FULL VALUE EN PROPUESTA COMERCIAL (Calculadas exclusivamente con totalDMNominal)
+        // COBERTURAS FULL VALUE EN PROPUESTA COMERCIAL (CON LEYENDA "Prorrata")
         if (totalDMNominal > 0) {
-            if (pTerremoto > 0) {
+            if (inclTerremoto) {
                 propTbody.innerHTML += `
-                    <tr><td>Extensión de Terremoto - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
+                    <tr><td>Extensión de Terremoto – Prorrata</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
                 `;
             }
-            if (pHVCT > 0) {
+            if (inclHVCT) {
                 propTbody.innerHTML += `
-                    <tr><td>Huracán, vendaval, ciclón y tornado (HVCT) - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
+                    <tr><td>Huracán, vendaval, ciclón y tornado (HVCT) – Prorrata</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
                 `;
             }
-            if (pGranizo > 0) {
+            if (inclGranizo) {
                 propTbody.innerHTML += `
-                    <tr><td>Granizo - Primer Riesgo Absoluto</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
+                    <tr><td>Granizo – Prorrata</td><td class="text-right">${fmt(totalDMNominal, mon)}</td><td class="text-right">10% del siniestro con min. de ${fmt(totalDMNominal * 0.005, mon)}</td></tr>
                 `;
             }
         }
