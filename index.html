@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotizador Todo Riesgo Operativo (TRO) - v27</title>
+    <title>Cotizador Todo Riesgo Operativo (TRO) - v29</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -255,7 +255,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <h2>San Cristóbal Seguros</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v27)</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO (v29)</p>
         <div class="form-group">
             <label>Usuario</label>
             <input type="text" id="login-user">
@@ -273,7 +273,7 @@
     <header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
-            <p>Versión v27</p>
+            <p>Versión v29</p>
         </div>
         <div>
             <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
@@ -632,7 +632,10 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">
                 <h2 style="margin: 0; border: none;">PROPUESTA COMERCIAL — TODO RIESGO OPERATIVO</h2>
-                <button type="button" class="btn" onclick="window.print()">Imprimir / Guardar PDF</button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-success" onclick="exportarPropuestaExcel()">📊 Descargar Hoja de Cálculo</button>
+                    <button type="button" class="btn" onclick="window.print()">Imprimir / Guardar PDF</button>
+                </div>
             </div>
 
             <div style="margin-top: 15px;">
@@ -1730,6 +1733,76 @@
         } else {
             obsBox.style.display = 'none';
         }
+    }
+
+    function exportarPropuestaExcel() {
+        const numCot = document.getElementById('cli-num-cotizacion').value || 'TRO';
+        
+        // Generación de formato de Hoja de Cálculo nativo para Excel
+        let excelContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+            <!--[if gte mso 9]>
+            <xml>
+                <x:ExcelWorkbook>
+                    <x:ExcelWorksheets>
+                        <x:ExcelWorksheet>
+                            <x:Name>Detalle Coberturas</x:Name>
+                            <x:WorksheetOptions>
+                                <x:DisplayGridlines/>
+                            </x:WorksheetOptions>
+                        </x:ExcelWorksheet>
+                    </x:ExcelWorksheets>
+                </x:ExcelWorkbook>
+            </xml>
+            <![endif]-->
+            <style>
+                th { background-color: #1e3a8a; color: white; font-weight: bold; text-align: left; border: 1px solid #cbd5e1; padding: 6px; }
+                td { border: 1px solid #cbd5e1; padding: 6px; }
+                .text-right { text-align: right; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="background-color: #1e3a8a; color: white; width: 350px;">Cobertura / Sublímite Activo</th>
+                        <th style="background-color: #1e3a8a; color: white; text-align: right; width: 180px;">Suma Asegurada</th>
+                        <th style="background-color: #1e3a8a; color: white; text-align: right; width: 300px;">Deducible Mínimo Aplicable</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        const propTbody = document.getElementById('prop-tabla-coberturas');
+        const rows = propTbody.querySelectorAll('tr');
+
+        rows.forEach(row => {
+            const cols = row.querySelectorAll('td');
+            if (cols.length === 3) {
+                let c1 = cols[0].innerText.trim();
+                let c2 = cols[1].innerText.trim();
+                let c3 = cols[2].innerText.trim();
+                excelContent += `
+                    <tr>
+                        <td>${c1}</td>
+                        <td class="text-right">${c2}</td>
+                        <td class="text-right">${c3}</td>
+                    </tr>`;
+            }
+        });
+
+        excelContent += `
+                </tbody>
+            </table>
+        </body>
+        </html>`;
+
+        const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Detalle_Coberturas_${numCot}.xls`;
+        a.click();
+        registrarLog("EXPORTAR_PROPUESTA_EXCEL", "Descarga de Detalle de Coberturas en 3 Columnas para Excel");
     }
 
     function exportarCSV() {
