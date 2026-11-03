@@ -241,11 +241,44 @@
             text-decoration: line-through;
         }
 
+        /* REGLAS DE IMPRESIÓN PARA OCULTAR HEADER, VERSIÓN, USUARIO Y URLS */
         @media print {
-            @page { margin: 10mm; }
-            body { background: white; padding: 0; }
-            header, .nav-tabs, .btn, .btn-clear, #tab-admin, #tab-tasas, #tab-auditoria, #login-overlay { display: none !important; }
-            .card { border: none; box-shadow: none; padding: 0; margin-bottom: 15px; }
+            @page { 
+                margin: 8mm; 
+                size: auto;
+            }
+            body { 
+                background: white !important; 
+                padding: 0 !important; 
+                color: black !important;
+            }
+            header, 
+            .nav-tabs, 
+            .btn, 
+            .btn-clear, 
+            #tab-cotizador, 
+            #tab-admin, 
+            #tab-tasas, 
+            #tab-auditoria, 
+            #login-overlay,
+            #user-info-lbl { 
+                display: none !important; 
+            }
+            .container { 
+                max-width: 100% !important; 
+                width: 100% !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+            }
+            .card { 
+                border: none !important; 
+                box-shadow: none !important; 
+                padding: 0 !important; 
+                margin-bottom: 0 !important; 
+            }
+            a[href]:after { 
+                content: none !important; 
+            }
         }
     </style>
 </head>
@@ -270,7 +303,7 @@
 </div>
 
 <div class="container">
-    header>
+    <header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
             <p>Versión v30 con Vigencia Prorrata</p>
@@ -1436,9 +1469,6 @@
         const text = document.getElementById('rubro-search').value.toLowerCase();
         const select = document.getElementById('rubro-select');
         select.innerHTML = '';
-        rubrosTasasData.forEach((index, item) => {
-            // Fix index iterating
-        });
         rubrosTasasData.forEach((item, index) => {
             if (item.r.toLowerCase().includes(text)) {
                 const opt = document.createElement('option');
