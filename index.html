@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html_code = r'''<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -69,6 +69,7 @@
             margin-bottom: 20px;
             border-bottom: 2px solid var(--border);
             padding-bottom: 5px;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
@@ -110,11 +111,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .form-group { margin-bottom: 12px; }
-        .form-row { display: flex; gap: 10px; }
-        .form-row .form-group { flex: 1; }
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .form-row .form-group { flex: 1; min-width: 180px; }
 
         label {
             display: block;
@@ -123,7 +126,7 @@
             font-size: 0.82rem;
         }
 
-        input[type="text"], input[type="password"], input[type="date"], select {
+        input[type="text"], input[type="password"], input[type="date"], input[type="number"], select {
             width: 100%;
             padding: 7px 10px;
             border: 1px solid var(--border);
@@ -212,8 +215,10 @@
             font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
+            white-space: nowrap;
         }
         .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-danger { background-color: var(--danger); }
         .btn-success { background-color: var(--success); }
 
@@ -288,16 +293,17 @@
 <div id="login-overlay">
     <div class="login-card">
         <h2>San Cristóbal Seguros</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Acceso al Cotizador TRO</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;">Acceso al Cotizador TRO</p>
+        <p id="login-cloud-status" style="font-size: 0.78rem; font-weight: bold; color: #2563eb; margin-bottom: 15px;">🔄 Conectando con base de datos...</p>
         <div class="form-group">
             <label>Usuario</label>
-            <input type="text" id="login-user">
+            <input type="text" id="login-user" onkeydown="if(event.key==='Enter') iniciarSesion()">
         </div>
         <div class="form-group">
             <label>Contraseña</label>
-            <input type="password" id="login-pass">
+            <input type="password" id="login-pass" onkeydown="if(event.key==='Enter') iniciarSesion()">
         </div>
-        <button type="button" class="btn btn-success" style="width: 100%; padding: 10px; margin-top: 10px;" onclick="iniciarSesion()">Ingresar al Sistema</button>
+        <button type="button" id="btn-login" class="btn btn-success" style="width: 100%; padding: 10px; margin-top: 10px;" onclick="iniciarSesion()">Ingresar al Sistema</button>
         <p id="login-error" style="color: var(--danger); font-size: 0.8rem; margin-top: 10px; display: none;">Usuario o contraseña incorrectos.</p>
     </div>
 </div>
@@ -306,7 +312,7 @@
     <header>
         <div>
             <h1>Sistema Cotizador Todo Riesgo Operativo (TRO)</h1>
-            <p>Versión v30 con Vigencia Prorrata</p>
+            <p>Versión v31 con Base de Datos en la Nube (Google Sheets) <span id="cloud-status-badge" style="background: rgba(255,255,255,0.18); padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-size: 0.78rem;">⚪ Local</span></p>
         </div>
         <div>
             <span id="user-info-lbl" style="font-size: 0.85rem; font-weight: bold; margin-right: 15px;"></span>
@@ -329,9 +335,18 @@
             
             <!-- PUNTO 1 -->
             <div class="card">
-                <h2>1. Identificación de Cliente y Estructura Comercial</h2>
+                <h2>
+                    1. Identificación de Cliente y Estructura Comercial
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button type="button" id="btn-buscar-cot" class="btn" onclick="buscarCotizacionNube()">🔍 Buscar por Cotización N°</button>
+                        <button type="button" id="btn-guardar-cot" class="btn btn-success" onclick="guardarCotizacionNube()">💾 Guardar en Nube</button>
+                    </div>
+                </h2>
                 <div class="form-row">
-                    <div class="form-group"><label>N° Cotización</label><input type="text" id="cli-num-cotizacion" value="TRO-20260918-0001" oninput="calcular()"></div>
+                    <div class="form-group">
+                        <label>N° Cotización (Clave de Búsqueda y Guardado)</label>
+                        <input type="text" id="cli-num-cotizacion" value="TRO-20260918-0001" oninput="calcular()" onkeydown="if(event.key==='Enter') buscarCotizacionNube()">
+                    </div>
                     <div class="form-group"><label>N° Solicitud</label><input type="text" id="cli-num-solicitud" value="SOL-854201" oninput="calcular()"></div>
                 </div>
                 <div class="form-row">
@@ -476,7 +491,7 @@
                     </div>
                     <div class="form-group">
                         <label>Ajuste Comercial Manual (% Prima)</label>
-                        <input type="number" id="ajuste-comercial" min="-90" max="300" value="0" step="1" oninput="calcular()"> %
+                        <input type="number" id="ajuste-comercial" min="-90" max="300" value="0" step="1" oninput="calcular()">
                     </div>
                 </div>
             </div>
@@ -595,7 +610,7 @@
             <div class="card">
                 <h2>9. Observaciones y Notas Adicionales</h2>
                 <div class="form-group">
-                    <textarea id="cot-observaciones" rows="3" style="width:100%; border:1px solid var(--border); border-radius:4px; padding:8px; font-family:inherit;" placeholder="Escriba notas o aclaraciones para la propuesta..." oninput="calcular()"></textarea>
+                    <textarea id="cot-observaciones" rows="3" style="width:100%; border:1px solid var(--border); border-radius:4px; padding:8px; font-family:inherit; box-sizing:border-box;" placeholder="Escriba notas o aclaraciones para la propuesta..." oninput="calcular()"></textarea>
                 </div>
             </div>
 
@@ -603,7 +618,10 @@
             <div class="card">
                 <h2>
                     10. Liquidación de Premio Total
-                    <button type="button" class="btn btn-success" onclick="exportarCSV()">Exportar CSV</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" class="btn btn-success" onclick="guardarCotizacionNube()">💾 Guardar Cotización en Nube</button>
+                        <button type="button" class="btn" onclick="exportarCSV()">Exportar CSV</button>
+                    </div>
                 </h2>
                 <table class="summary-table">
                     <thead>
@@ -785,7 +803,7 @@
     <!-- PESTAÑA 4: GESTIÓN DE USUARIOS -->
     <div id="tab-admin" class="tab-content">
         <div class="card">
-            <h2 id="form-user-title">Agregar Nuevo Usuario</h2>
+            <h2 id="form-user-title">Agregar Nuevo Usuario (Sincronizado en Nube)</h2>
             <input type="hidden" id="abm-user-index" value="-1">
             <div class="form-row" style="margin-bottom: 15px;">
                 <div class="form-group"><label>Usuario</label><input type="text" id="abm-user-nombre" placeholder="Nombre usuario..."></div>
@@ -802,7 +820,7 @@
                     <button type="button" class="btn btn-danger" id="btn-cancelar-user" onclick="limpiarFormUsuario()" style="display: none;">Cancelar</button>
                 </div>
             </div>
-            <h2>Listado de Usuarios Registrados</h2>
+            <h2>Listado de Usuarios Registrados en la Nube</h2>
             <table class="admin-table">
                 <thead>
                     <tr>
@@ -832,6 +850,12 @@
 </div>
 
 <script>
+    // =========================================================================
+    // CONFIGURACIÓN DE BASE DE DATOS EN LA NUBE (GOOGLE APPS SCRIPT)
+    // Reemplazá el texto entre comillas por tu URL /exec de Google Apps Script
+    // =========================================================================
+    const API_URL = "PEGAR_AQUI_TU_URL_DE_APPS_SCRIPT";
+
     const recargosCuotas = {
         USD: { 1: 0, 2: 1.004999174, 3: 1.010000388, 4: 1.014999561, 5: 1.020000775, 6: 1.024999949, 7: 1.030100694, 8: 1.035226821, 9: 1.040378458, 10: 1.045555732, 11: 1.050758769, 12: 1.054999072 },
         ARS: { 1: 0, 2: 1.047000394, 3: 1.072000343, 4: 1.096000457, 5: 1.121000406, 6: 1.146570608, 7: 1.172724070, 8: 1.199474097, 9: 1.226834297, 10: 1.254818587, 11: 1.283441204, 12: 1.306000437 }
@@ -853,7 +877,7 @@
         5: { edif: 0.04, cont: 0.02 }
     };
 
-    // MATRIZ COMPLETA DE 296 RUBROS
+    // MATRIZ COMPLETA DE 296 RUBROS (RESPALDO INICIAL)
     let rubrosTasasData = [
         {"r": "Abanicos Y Paraguas, Venta", "te": 0.792, "tc": 1.54},
         {"r": "Aberturas (sin taller), Venta De", "te": 1.1, "tc": 2.2},
@@ -1188,7 +1212,7 @@
         { id: "sub_31", n: "Bienes de terceros bajo cuidado, custodia y control", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true }
     ];
 
-    // USUARIOS DEL SISTEMA
+    // USUARIOS DEL SISTEMA (RESPALDO HASTA CARGAR NUBE)
     let usuariosSistema = [
         { u: "matias.gabrielli", p: "Guille2020", perfil: "admin" },
         { u: "suscriptor", p: "suscriptor123", perfil: "comercial" }
@@ -1198,7 +1222,276 @@
     let auditLogs = [];
     let tasaEdifActual = 0.48;
     let tasaContActual = 1.00;
+    let nubeConectada = false;
 
+    // =========================================================================
+    // FUNCIONES DE SINCRONIZACIÓN CON GOOGLE SHEETS
+    // =========================================================================
+    function setCloudStatus(texto, color = null) {
+        const badge = document.getElementById('cloud-status-badge');
+        const loginStatus = document.getElementById('login-cloud-status');
+        if (badge) {
+            badge.innerText = texto;
+            if (color) badge.style.color = color;
+        }
+        if (loginStatus) {
+            loginStatus.innerText = texto;
+            if (color) loginStatus.style.color = color;
+        }
+    }
+
+    function apiConfigured() {
+        return API_URL && API_URL.startsWith("https://script.google.com/");
+    }
+
+    async function cargarDatosNube() {
+        if (!apiConfigured()) {
+            setCloudStatus("⚠️ Sin URL de Apps Script configurada (Modo local)", "#f59e0b");
+            return;
+        }
+        setCloudStatus("🔄 Sincronizando con Google Sheets...", "#2563eb");
+        try {
+            const resp = await fetch(`${API_URL}?action=init`);
+            const data = await resp.json();
+            if (data.status === "ok") {
+                nubeConectada = true;
+                if (data.usuarios && data.usuarios.length > 0) {
+                    usuariosSistema = data.usuarios;
+                }
+                if (data.tasas && data.tasas.length > 0) {
+                    rubrosTasasData = data.tasas;
+                } else {
+                    sincronizarTasasNube();
+                }
+                if (data.auditoria && data.auditoria.length > 0) {
+                    auditLogs = data.auditoria;
+                }
+                setCloudStatus("🟢 Base de Datos Nube Conectada", "#16a34a");
+            } else {
+                setCloudStatus("⚠️ Error al leer nube (Usando respaldo local)", "#dc2626");
+            }
+        } catch (err) {
+            console.error(err);
+            setCloudStatus("⚠️ Sin conexión a Google Sheets (Modo local)", "#dc2626");
+        }
+    }
+
+    async function postNube(payload) {
+        if (!apiConfigured()) return null;
+        setCloudStatus("🟡 Guardando en nube...");
+        try {
+            const resp = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            const data = await resp.json();
+            setCloudStatus("🟢 Nube conectada");
+            return data;
+        } catch (err) {
+            console.error(err);
+            setCloudStatus("🔴 Error de sincronización");
+            return null;
+        }
+    }
+
+    async function sincronizarUsuariosNube() {
+        await postNube({ action: "syncUsuarios", usuarios: usuariosSistema });
+    }
+
+    async function sincronizarTasasNube() {
+        await postNube({ action: "syncTasas", tasas: rubrosTasasData });
+    }
+
+    // =========================================================================
+    // GUARDAR Y BUSCAR COTIZACIONES EN GOOGLE SHEETS POR "COTIZACIÓN N°"
+    // =========================================================================
+    function recopilarEstadoCotizacion() {
+        const sumasIds = ['sa-edificio', 'sa-contenido', 'sa-mercaderia', 'sa-mp', 'sa-maquinarias', 'sa-bienes-uso', 'sa-equipos-elec', 'sa-instalaciones', 'sa-insumos', 'sa-warrant', 'sa-objetos', 'sa-semielab', 'sa-suministros', 'sa-pb'];
+        const sumas = {};
+        sumasIds.forEach(id => sumas[id] = document.getElementById(id).value);
+
+        const selRubro = document.getElementById('rubro-select');
+        const rubroNombre = selRubro.selectedIndex >= 0 ? selRubro.options[selRubro.selectedIndex].text : "";
+
+        return {
+            numCotizacion: document.getElementById('cli-num-cotizacion').value.trim(),
+            numSolicitud: document.getElementById('cli-num-solicitud').value,
+            razonSocial: document.getElementById('cli-razon-social').value,
+            cuit: document.getElementById('cli-cuit').value,
+            sucursal: document.getElementById('str-sucursal').value,
+            agente: document.getElementById('str-agente').value,
+            organizador: document.getElementById('str-organizador').value,
+            vigenciaDesde: document.getElementById('vigencia-desde').value,
+            vigenciaHasta: document.getElementById('vigencia-hasta').value,
+            domicilio: document.getElementById('ubic-domicilio').value,
+            localidad: document.getElementById('ubic-localidad').value,
+            provincia: document.getElementById('ubic-provincia').value,
+            tipoConstruccion: document.getElementById('tipo-construccion').value,
+            rubroNombre: rubroNombre,
+            moneda: document.getElementById('moneda').value,
+            cuotas: document.getElementById('cuotas').value,
+            medioPago: document.getElementById('medio-pago').value,
+            clausulaSwing: document.getElementById('clausula-swing').value,
+            ajusteComercial: document.getElementById('ajuste-comercial').value,
+            secAntiexp: document.getElementById('sec-antiexp').checked,
+            secSprinkler: document.getElementById('sec-sprinkler').checked,
+            secDetectores: document.getElementById('sec-detectores').checked,
+            secHidrantes: document.getElementById('sec-hidrantes').checked,
+            sumas: sumas,
+            pctDmSlider: document.getElementById('pct-dm-num').value,
+            sublimitesActivos: sublimitesData.map(s => ({ id: s.id, active: s.active })),
+            inclTerremoto: document.getElementById('chk-terremoto').checked,
+            inclHVCT: document.getElementById('chk-hvct').checked,
+            inclGranizo: document.getElementById('chk-granizo').checked,
+            deducibleGeneral: document.getElementById('deducible-general-select').value,
+            observaciones: document.getElementById('cot-observaciones').value,
+            premioTotal: document.getElementById('val-premio-total').innerText
+        };
+    }
+
+    async function guardarCotizacionNube() {
+        if (!apiConfigured()) {
+            alert("Primero configurá tu URL de Google Apps Script en la constante API_URL del código.");
+            return;
+        }
+        const estado = recopilarEstadoCotizacion();
+        if (!estado.numCotizacion) {
+            alert("Por favor ingresá un N° de Cotización antes de guardar.");
+            return;
+        }
+
+        const btn = document.getElementById('btn-guardar-cot');
+        btn.disabled = true;
+        btn.innerText = "Guardando...";
+
+        const res = await postNube({ action: "guardarCotizacion", data: estado });
+        btn.disabled = false;
+        btn.innerText = "💾 Guardar en Nube";
+
+        if (res && res.status === "ok") {
+            registrarLog("GUARDAR_COTIZACION", `Cotización ${estado.numCotizacion} (${estado.razonSocial}) guardada en Google Sheets`);
+            alert(`✅ Cotización "${estado.numCotizacion}" guardada correctamente en la base de datos.`);
+        } else {
+            alert("❌ Hubo un error al guardar la cotización en la nube.");
+        }
+    }
+
+    async function buscarCotizacionNube() {
+        if (!apiConfigured()) {
+            alert("Primero configurá tu URL de Google Apps Script en la constante API_URL del código.");
+            return;
+        }
+        const num = document.getElementById('cli-num-cotizacion').value.trim();
+        if (!num) {
+            alert("Ingresá el N° de Cotización que querés buscar.");
+            return;
+        }
+
+        const btn = document.getElementById('btn-buscar-cot');
+        btn.disabled = true;
+        btn.innerText = "Buscando...";
+        setCloudStatus("🔍 Buscando cotización...");
+
+        try {
+            const resp = await fetch(`${API_URL}?action=buscarCotizacion&num=${encodeURIComponent(num)}`);
+            const data = await resp.json();
+            setCloudStatus("🟢 Nube conectada");
+
+            if (data.status === "ok" && data.cotizacion) {
+                aplicarEstadoCotizacion(data.cotizacion);
+                registrarLog("CARGAR_COTIZACION", `Cotización ${num} recuperada desde la nube`);
+                alert(`✅ Cotización "${num}" cargada con éxito.`);
+            } else {
+                alert(`⚠️ No se encontró ninguna cotización guardada con el N° "${num}".`);
+            }
+        } catch (err) {
+            console.error(err);
+            setCloudStatus("🔴 Error de búsqueda");
+            alert("❌ Error al consultar la base de datos en Google Sheets.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "🔍 Buscar por Cotización N°";
+        }
+    }
+
+    function aplicarEstadoCotizacion(c) {
+        document.getElementById('cli-num-cotizacion').value = c.numCotizacion || "";
+        document.getElementById('cli-num-solicitud').value = c.numSolicitud || "";
+        document.getElementById('cli-razon-social').value = c.razonSocial || "";
+        document.getElementById('cli-cuit').value = c.cuit || "";
+        document.getElementById('str-sucursal').value = c.sucursal || "";
+        document.getElementById('str-agente').value = c.agente || "";
+        document.getElementById('str-organizador').value = c.organizador || "";
+        document.getElementById('vigencia-desde').value = c.vigenciaDesde || "";
+        document.getElementById('vigencia-hasta').value = c.vigenciaHasta || "";
+        document.getElementById('ubic-domicilio').value = c.domicilio || "";
+        document.getElementById('ubic-localidad').value = c.localidad || "";
+        document.getElementById('ubic-provincia').value = c.provincia || "CÓRDOBA";
+        document.getElementById('tipo-construccion').value = c.tipoConstruccion || "1.0";
+
+        document.getElementById('rubro-search').value = "";
+        filtrarRubros();
+        const select = document.getElementById('rubro-select');
+        for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].text === c.rubroNombre) {
+                select.selectedIndex = i;
+                break;
+            }
+        }
+        if (select.selectedIndex >= 0) {
+            const idx = select.value;
+            tasaEdifActual = rubrosTasasData[idx].te;
+            tasaContActual = rubrosTasasData[idx].tc;
+            document.getElementById('badge-tasa-edif').innerText = tasaEdifActual.toFixed(3) + ' ‰';
+            document.getElementById('badge-tasa-cont').innerText = tasaContActual.toFixed(3) + ' ‰';
+        }
+
+        document.getElementById('moneda').value = c.moneda || "USD";
+        document.getElementById('cuotas').value = c.cuotas || "12";
+        document.getElementById('medio-pago').value = c.medioPago || "debito";
+        document.getElementById('clausula-swing').value = c.clausulaSwing || "0";
+        document.getElementById('ajuste-comercial').value = c.ajusteComercial || "0";
+
+        document.getElementById('sec-antiexp').checked = !!c.secAntiexp;
+        document.getElementById('sec-sprinkler').checked = !!c.secSprinkler;
+        document.getElementById('sec-detectores').checked = !!c.secDetectores;
+        document.getElementById('sec-hidrantes').checked = !!c.secHidrantes;
+
+        if (c.sumas) {
+            Object.keys(c.sumas).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = c.sumas[id];
+            });
+        }
+
+        const pctSlider = c.pctDmSlider !== undefined ? c.pctDmSlider : 10;
+        document.getElementById('pct-dm-slider').value = pctSlider;
+        document.getElementById('pct-dm-num').value = pctSlider;
+
+        if (c.sublimitesActivos && Array.isArray(c.sublimitesActivos)) {
+            c.sublimitesActivos.forEach(savedSub => {
+                const target = sublimitesData.find(s => s.id === savedSub.id);
+                if (target) target.active = savedSub.active;
+            });
+        }
+
+        document.getElementById('chk-terremoto').checked = c.inclTerremoto !== undefined ? c.inclTerremoto : true;
+        document.getElementById('chk-hvct').checked = c.inclHVCT !== undefined ? c.inclHVCT : true;
+        document.getElementById('chk-granizo').checked = c.inclGranizo !== undefined ? c.inclGranizo : true;
+
+        document.getElementById('deducible-general-select').value = c.deducibleGeneral || "opcion1";
+        document.getElementById('cot-observaciones').value = c.observaciones || "";
+
+        calcular();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        cargarDatosNube();
+    });
+
+    // =========================================================================
+    // LÓGICA GENERAL DEL COTIZADOR
+    // =========================================================================
     function parseFormattedNumber(val) {
         if (!val) return 0;
         const clean = val.toString().replace(/\./g, '').replace(',', '.');
@@ -1227,10 +1520,12 @@
     }
 
     function registrarLog(accion, detalle) {
-        const rol = usuarioActual ? usuarioActual.perfil.toUpperCase() : "INVITADO";
+        const rol = usuarioActual ? `${usuarioActual.u} (${usuarioActual.perfil.toUpperCase()})` : "INVITADO";
         const now = new Date().toLocaleString('es-AR');
-        auditLogs.unshift({ fecha: now, rol: rol, accion: accion, detalle: detalle });
+        const entry = { fecha: now, rol: rol, accion: accion, detalle: detalle };
+        auditLogs.unshift(entry);
         renderAuditoria();
+        postNube({ action: "addLog", log: entry });
     }
 
     function renderAuditoria() {
@@ -1243,9 +1538,19 @@
         });
     }
 
-    function iniciarSesion() {
+    async function iniciarSesion() {
         const u = document.getElementById('login-user').value.trim();
         const p = document.getElementById('login-pass').value.trim();
+
+        if (apiConfigured() && !nubeConectada) {
+            const btnLogin = document.getElementById('btn-login');
+            btnLogin.disabled = true;
+            btnLogin.innerText = "Verificando en la nube...";
+            await cargarDatosNube();
+            btnLogin.disabled = false;
+            btnLogin.innerText = "Ingresar al Sistema";
+        }
+
         const found = usuariosSistema.find(item => item.u === u && item.p === p);
 
         if (found) {
@@ -1264,6 +1569,7 @@
             inicializarRubros();
             renderABMUsuarios();
             renderMatrizTasas();
+            renderAuditoria();
             registrarLog("LOGIN_EXITOSO", `Inicio de sesión usuario ${u}`);
         } else {
             document.getElementById('login-error').style.display = 'block';
@@ -1278,8 +1584,8 @@
         document.getElementById('login-pass').value = '';
     }
 
-    /* GESTIÓN DE USUARIOS */
-    function guardarUsuario() {
+    /* GESTIÓN DE USUARIOS (SINCRONIZADO CON GOOGLE SHEETS) */
+    async function guardarUsuario() {
         const u = document.getElementById('abm-user-nombre').value.trim();
         const p = document.getElementById('abm-user-pass').value.trim();
         const perfil = document.getElementById('abm-user-perfil').value;
@@ -1304,6 +1610,7 @@
 
         limpiarFormUsuario();
         renderABMUsuarios();
+        await sincronizarUsuariosNube();
     }
 
     function editarUsuario(idx) {
@@ -1318,12 +1625,13 @@
         document.getElementById('btn-cancelar-user').style.display = "inline-block";
     }
 
-    function eliminarUsuario(idx) {
+    async function eliminarUsuario(idx) {
         const user = usuariosSistema[idx];
         if (confirm(`¿Está seguro de eliminar al usuario ${user.u}?`)) {
             usuariosSistema.splice(idx, 1);
             registrarLog("BAJA_USUARIO", `Usuario eliminado: ${user.u}`);
             renderABMUsuarios();
+            await sincronizarUsuariosNube();
         }
     }
 
@@ -1333,7 +1641,7 @@
         document.getElementById('abm-user-perfil').value = 'comercial';
         document.getElementById('abm-user-index').value = '-1';
 
-        document.getElementById('form-user-title').innerText = "Agregar Nuevo Usuario";
+        document.getElementById('form-user-title').innerText = "Agregar Nuevo Usuario (Sincronizado en Nube)";
         document.getElementById('btn-guardar-user').innerText = "+ Guardar Usuario";
         document.getElementById('btn-cancelar-user').style.display = "none";
     }
@@ -1346,7 +1654,7 @@
             tr.innerHTML = `
                 <td>${user.u}</td>
                 <td><b>${user.perfil.toUpperCase()}</b></td>
-                <td><span style="color:var(--success); font-weight:bold;">Activo</span></td>
+                <td><span style="color:var(--success); font-weight:bold;">Activo (Nube)</span></td>
                 <td class="text-center">
                     <button class="btn" style="padding: 2px 8px;" onclick="editarUsuario(${idx})">Editar</button>
                     <button class="btn btn-danger" style="padding: 2px 8px;" onclick="eliminarUsuario(${idx})">Eliminar</button>
@@ -1356,7 +1664,7 @@
         });
     }
 
-    /* MATRIZ DE TASAS ACTIVAS */
+    /* MATRIZ DE TASAS ACTIVAS (SINCRONIZADO CON GOOGLE SHEETS) */
     function renderMatrizTasas() {
         const filter = document.getElementById('admin-search-tasas').value.toLowerCase();
         const tbody = document.getElementById('tabla-matriz-tasas');
@@ -1376,7 +1684,7 @@
         });
     }
 
-    function actualizarTasaFila(idx) {
+    async function actualizarTasaFila(idx) {
         const te = parseFloat(document.getElementById(`tasas-te-${idx}`).value);
         const tc = parseFloat(document.getElementById(`tasas-tc-${idx}`).value);
 
@@ -1386,7 +1694,8 @@
             filtrarRubros();
             seleccionarRubro();
             registrarLog("MODIF_TASA", `Tasas actualizadas para ${rubrosTasasData[idx].r}: Edif ${te}‰, Cont ${tc}‰`);
-            alert(`Tasa para ${rubrosTasasData[idx].r} actualizada correctamente.`);
+            await sincronizarTasasNube();
+            alert(`Tasa para ${rubrosTasasData[idx].r} actualizada en la nube correctamente.`);
         }
     }
 
@@ -1409,7 +1718,7 @@
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             const lines = e.target.result.split('\n');
             let actualizados = 0;
 
@@ -1434,7 +1743,8 @@
             filtrarRubros();
             seleccionarRubro();
             registrarLog("IMPORTAR_TASAS", `Importación masiva completada: ${actualizados} rubros actualizados`);
-            alert(`Se actualizaron con éxito ${actualizados} actividades desde el archivo CSV.`);
+            await sincronizarTasasNube();
+            alert(`Se actualizaron con éxito ${actualizados} actividades y se sincronizaron en la nube.`);
         };
         reader.readAsText(file);
     }
@@ -1593,6 +1903,10 @@
 
         const zonaEq = zonasProvincias[provincia] || 3;
         const tasasEq = tasasTerremoto[zonaEq] || tasasTerremoto[3];
+
+        document.getElementById('lbl-zona-terremoto').innerText = `Zona ${zonaEq}`;
+        document.getElementById('lbl-tasa-eq-edif').innerText = `${tasasEq.edif.toFixed(2)} ‰`;
+        document.getElementById('lbl-tasa-eq-cont').innerText = `${tasasEq.cont.toFixed(2)} ‰`;
 
         const saEdificio = getNum('sa-edificio');
         
@@ -1756,6 +2070,7 @@
         document.getElementById('lbl-pct-ded-gen').innerText = '-' + (pctDescDedGen * 100).toFixed(0) + '%';
         document.getElementById('val-desc-ded-gen').innerText = fmt(valDescDedGen, mon);
 
+        document.getElementById('lbl-pct-pago').innerText = factorPago < 1 ? '-5%' : '0%';
         document.getElementById('lbl-pct-comercial').innerText = (pctComercial * 100).toFixed(0) + '%';
         document.getElementById('val-ajuste-comercial').innerText = fmt(valAjusteComercial, mon);
 
@@ -1884,4 +2199,9 @@
     }
 </script>
 </body>
-</html>
+</html>'''
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html_code)
+
+print("Archivo generado correctamente. Tamaño en bytes:", len(html_code.encode("utf-8")))
