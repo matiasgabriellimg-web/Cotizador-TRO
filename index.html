@@ -1,4 +1,4 @@
-html_code = r'''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -339,7 +339,7 @@ html_code = r'''<!DOCTYPE html>
                     1. Identificación de Cliente y Estructura Comercial
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                         <button type="button" id="btn-buscar-cot" class="btn" onclick="buscarCotizacionNube()">🔍 Buscar por Cotización N°</button>
-                        <button type="button" id="btn-guardar-cot" class="btn btn-success" onclick="guardarCotizacionNube()">💾 Guardar en Nube</button>
+                        <button type="button" id="btn-guardar-cot" class="btn btn-success" onclick="guardarCotizacionNube()">Guardar</button>
                     </div>
                 </h2>
                 <div class="form-row">
@@ -1366,7 +1366,7 @@ html_code = r'''<!DOCTYPE html>
 
         const res = await postNube({ action: "guardarCotizacion", data: estado });
         btn.disabled = false;
-        btn.innerText = "💾 Guardar en Nube";
+        btn.innerText = "Guardar";
 
         if (res && res.status === "ok") {
             registrarLog("GUARDAR_COTIZACION", `Cotización ${estado.numCotizacion} (${estado.razonSocial}) guardada en Google Sheets`);
@@ -2199,9 +2199,4 @@ html_code = r'''<!DOCTYPE html>
     }
 </script>
 </body>
-</html>'''
-
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html_code)
-
-print("Archivo generado correctamente. Tamaño en bytes:", len(html_code.encode("utf-8")))
+</html>
