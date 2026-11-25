@@ -1212,11 +1212,8 @@
         { id: "sub_31", n: "Bienes de terceros bajo cuidado, custodia y control", maxPct: 0.05, type: "PCT_DM", pctDM: 0.05, dedMinPct: 0.005, factor: 0.65, active: true }
     ];
 
-    // USUARIOS DEL SISTEMA (RESPALDO HASTA CARGAR NUBE)
-    let usuariosSistema = [
-        { u: "matias.gabrielli", p: "Guille2020", perfil: "admin" },
-        { u: "suscriptor", p: "suscriptor123", perfil: "comercial" }
-    ];
+    // USUARIOS DEL SISTEMA (SIN CREDENCIALES EN EL CÓDIGO CLIENTE)
+    let usuariosSistema = [];
 
     let usuarioActual = null;
     let auditLogs = [];
@@ -1244,20 +1241,22 @@
         return API_URL && API_URL.startsWith("https://script.google.com/");
     }
 
-    async function cargarDatosNube() {
+    function verificarEstadoInicialNube() {
         if (!apiConfigured()) {
-            setCloudStatus("⚠️ Sin URL de Apps Script configurada (Modo local)", "#f59e0b");
+            setCloudStatus("⚠️ Sin URL de Apps Script configurada", "#f59e0b");
             return;
         }
-        setCloudStatus("🔄 Sincronizando con Google Sheets...", "#2563eb");
+        setCloudStatus("🔒 Autenticación protegida en servidor", "#2563eb");
+    }
+
+    async function cargarDatosPostLogin() {
+        if (!apiConfigured()) return;
+        setCloudStatus("🔄 Cargando tasas y auditoría...", "#2563eb");
         try {
             const resp = await fetch(`${API_URL}?action=init`);
             const data = await resp.json();
             if (data.status === "ok") {
                 nubeConectada = true;
-                if (data.usuarios && data.usuarios.length > 0) {
-                    usuariosSistema = data.usuarios;
-                }
                 if (data.tasas && data.tasas.length > 0) {
                     rubrosTasasData = data.tasas;
                 } else {
@@ -1266,13 +1265,30 @@
                 if (data.auditoria && data.auditoria.length > 0) {
                     auditLogs = data.auditoria;
                 }
+                if (usuarioActual && usuarioActual.perfil === 'admin') {
+                    await cargarUsuariosAdminNube();
+                }
                 setCloudStatus("🟢 Base de Datos Nube Conectada", "#16a34a");
             } else {
-                setCloudStatus("⚠️ Error al leer nube (Usando respaldo local)", "#dc2626");
+                setCloudStatus("⚠️ Error al leer nube", "#dc2626");
             }
         } catch (err) {
             console.error(err);
-            setCloudStatus("⚠️ Sin conexión a Google Sheets (Modo local)", "#dc2626");
+            setCloudStatus("⚠️ Sin conexión a Google Sheets", "#dc2626");
+        }
+    }
+
+    async function cargarUsuariosAdminNube() {
+        if (!apiConfigured() || !usuarioActual || usuarioActual.perfil !== 'admin') return;
+        try {
+            const resp = await fetch(`${API_URL}?action=getUsuarios`);
+            const data = await resp.json();
+            if (data.status === "ok" && Array.isArray(data.usuarios)) {
+                usuariosSistema = data.usuarios;
+                renderABMUsuarios();
+            }
+        } catch (err) {
+            console.error(err);
         }
     }
 
@@ -1486,7 +1502,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        cargarDatosNube();
+        verificarEstadoInicialNube();
     });
 
     // =========================================================================
@@ -1541,63 +1557,95 @@
     async function iniciarSesion() {
         const u = document.getElementById('login-user').value.trim();
         const p = document.getElementById('login-pass').value.trim();
+        const errEl = document.getElementById('login-error');
 
-        if (apiConfigured() && !nubeConectada) {
-            const btnLogin = document.getElementById('btn-login');
-            btnLogin.disabled = true;
-            btnLogin.innerText = "Verificando en la nube...";
-            await cargarDatosNube();
-            btnLogin.disabled = false;
-            btnLogin.innerText = "Ingresar al Sistema";
+        if (!u || !p) {
+            errEl.innerText = "Ingrese usuario y contraseña.";
+            errEl.style.display = 'block';
+            return;
         }
 
-        const found = usuariosSistema.find(item => item.u === u && item.p === p);
+        if (!apiConfigured()) {
+            errEl.innerText = "URL de Google Apps Script no configurada.";
+            errEl.style.display = 'block';
+            return;
+        }
 
-        if (found) {
-            usuarioActual = found;
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('user-info-lbl').innerText = `Usuario: ${found.u} (${found.perfil.toUpperCase()})`;
-            document.getElementById('login-error').style.display = 'none';
+        const btnLogin = document.getElementById('btn-login');
+        btnLogin.disabled = true;
+        btnLogin.innerText = "Verificando credenciales...";
+        setCloudStatus("🔄 Validando usuario en servidor...", "#2563eb");
 
-            const adminElems = document.querySelectorAll('.tab-admin-only');
-            if (found.perfil === 'admin') {
-                adminElems.forEach(el => el.style.display = 'block');
+        try {
+            const resp = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "login", u: u, p: p })
+            });
+            const data = await resp.json();
+
+            if (data && data.status === "ok" && data.user) {
+                usuarioActual = { u: data.user.u, perfil: data.user.perfil };
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('user-info-lbl').innerText = `Usuario: ${usuarioActual.u} (${usuarioActual.perfil.toUpperCase()})`;
+                errEl.style.display = 'none';
+
+                const adminElems = document.querySelectorAll('.tab-admin-only');
+                if (usuarioActual.perfil === 'admin') {
+                    adminElems.forEach(el => el.style.display = 'block');
+                } else {
+                    adminElems.forEach(el => el.style.display = 'none');
+                }
+
+                await cargarDatosPostLogin();
+                inicializarRubros();
+                renderABMUsuarios();
+                renderMatrizTasas();
+                renderAuditoria();
+                registrarLog("LOGIN_EXITOSO", `Inicio de sesión usuario ${usuarioActual.u}`);
             } else {
-                adminElems.forEach(el => el.style.display = 'none');
+                errEl.innerText = (data && data.message) ? data.message : "Usuario o contraseña incorrectos.";
+                errEl.style.display = 'block';
+                setCloudStatus("🔴 Acceso denegado", "#dc2626");
             }
-
-            inicializarRubros();
-            renderABMUsuarios();
-            renderMatrizTasas();
-            renderAuditoria();
-            registrarLog("LOGIN_EXITOSO", `Inicio de sesión usuario ${u}`);
-        } else {
-            document.getElementById('login-error').style.display = 'block';
+        } catch (err) {
+            console.error(err);
+            errEl.innerText = "Error de conexión con el servidor de autenticación.";
+            errEl.style.display = 'block';
+            setCloudStatus("🔴 Error de conexión", "#dc2626");
+        } finally {
+            btnLogin.disabled = false;
+            btnLogin.innerText = "Ingresar al Sistema";
         }
     }
 
     function cerrarSesion() {
         registrarLog("LOGOUT", `Cierre de sesión usuario ${usuarioActual ? usuarioActual.u : ''}`);
         usuarioActual = null;
+        usuariosSistema = [];
         document.getElementById('login-overlay').style.display = 'flex';
         document.getElementById('login-user').value = '';
         document.getElementById('login-pass').value = '';
+        verificarEstadoInicialNube();
     }
 
-    /* GESTIÓN DE USUARIOS (SINCRONIZADO CON GOOGLE SHEETS) */
+    /* GESTIÓN DE USUARIOS (SINCRONIZADO CON GOOGLE SHEETS - SIN EXPONER CLAVES) */
     async function guardarUsuario() {
         const u = document.getElementById('abm-user-nombre').value.trim();
         const p = document.getElementById('abm-user-pass').value.trim();
         const perfil = document.getElementById('abm-user-perfil').value;
         const index = parseInt(document.getElementById('abm-user-index').value);
 
-        if (!u || !p) {
-            alert("Por favor, ingrese un usuario y contraseña válidos.");
+        if (!u) {
+            alert("Por favor, ingrese un nombre de usuario válido.");
             return;
         }
 
         if (index === -1) {
-            if (usuariosSistema.some(usr => usr.u === u)) {
+            if (!p) {
+                alert("Para un usuario nuevo debe ingresar una contraseña.");
+                return;
+            }
+            if (usuariosSistema.some(usr => usr.u.toLowerCase() === u.toLowerCase())) {
                 alert("El nombre de usuario ya existe.");
                 return;
             }
@@ -1611,12 +1659,14 @@
         limpiarFormUsuario();
         renderABMUsuarios();
         await sincronizarUsuariosNube();
+        usuariosSistema.forEach(usr => usr.p = "");
     }
 
     function editarUsuario(idx) {
         const user = usuariosSistema[idx];
         document.getElementById('abm-user-nombre').value = user.u;
-        document.getElementById('abm-user-pass').value = user.p;
+        document.getElementById('abm-user-pass').value = '';
+        document.getElementById('abm-user-pass').placeholder = 'Dejar vacío para mantener clave actual...';
         document.getElementById('abm-user-perfil').value = user.perfil;
         document.getElementById('abm-user-index').value = idx;
 
@@ -1638,6 +1688,7 @@
     function limpiarFormUsuario() {
         document.getElementById('abm-user-nombre').value = '';
         document.getElementById('abm-user-pass').value = '';
+        document.getElementById('abm-user-pass').placeholder = 'Clave...';
         document.getElementById('abm-user-perfil').value = 'comercial';
         document.getElementById('abm-user-index').value = '-1';
 
